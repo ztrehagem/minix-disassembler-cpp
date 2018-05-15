@@ -35,6 +35,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111100)
                  == 0b00000000) ti += add_1(head);
     else if ((dbl & 0b1111110000111000)
+                 == 0b1000000000000000) ti += add_2(head);
+    else if ((dbl & 0b1111110000111000)
                  == 0b1000000000111000) ti += cmp_2(head);
     else if ((dbl & 0b1111111000111000)
                  == 0b1111011000000000) ti += test_2(head);
@@ -140,6 +142,24 @@ size_t Disassembler::add_1(const char *head) {
   } else {
     cout << get_rm_string(inst) << ", " << get_reg_name(inst);
   }
+
+  return len;
+}
+
+size_t Disassembler::add_2(const char *head) {
+  Inst inst;
+  inst.s = head[0] >> 1;
+  inst.w = head[0];
+  inst.mod = head[1] >> 6;
+  inst.rm = head[1];
+  const bool is_wide = inst.s == 0 && inst.w == 1;
+  set_data(inst, &head[2], is_wide);
+
+  const size_t len = is_wide ? 4 : 3;
+  print_bytes(head, len);
+  cout << "\t add ";
+  cout << get_rm_string(inst) << ", ";
+  print_data(inst, is_wide);
 
   return len;
 }

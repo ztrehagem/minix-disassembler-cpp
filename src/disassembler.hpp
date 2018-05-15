@@ -35,6 +35,7 @@ private:
   size_t push_2(const char *);
   size_t lea_1(const char *);
   size_t add_1(const char *);
+  size_t add_2(const char *);
   size_t cmp_2(const char *);
   size_t test_2(const char *);
   size_t xor_1(const char *);
