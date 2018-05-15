@@ -29,8 +29,16 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b10001000) ti += mov_1(head);
     else if ((top & 0b11110000)
                  == 0b10110000) ti += mov_3(head);
+    else if ((dbl & 0b1111111100111000)
+                 == 0b1111111100110000) ti += push_1(head);
     else if ((top & 0b11111000)
                  == 0b01010000) ti += push_2(head);
+    else if ((top & 0b11111000)
+                 == 0b01011000) ti += pop_2(head);
+    else if ((top & 0b11111110)
+                 == 0b11100100) ti += in_1(head);
+    else if ((top & 0b11111110)
+                 == 0b11101100) ti += in_2(head);
     else if ((top & 0b11111111)
                  == 0b10001101) ti += lea_1(head);
     else if ((top & 0b11111100)
@@ -43,6 +51,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b1000000000111000) ti += cmp_2(head);
     else if ((dbl & 0b1111110000111000)
                  == 0b1101000000100000) ti += shl_1(head);
+    else if ((top & 0b11111100)
+                 == 0b00100000) ti += and_1(head);
     else if ((dbl & 0b1111111000111000)
                  == 0b1111011000000000) ti += test_2(head);
     else if ((top & 0b11111110)
@@ -57,6 +67,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b11101001) ti += jmp_1(head);
     else if ((top & 0b11111111)
                  == 0b11101011) ti += jmp_2(head);
+    else if ((top & 0b11111111)
+                 == 0b01110100) ti += je_1(head);
     else if ((top & 0b11111111)
                  == 0b01111100) ti += jl_1(head);
     else if ((top & 0b11111111)
@@ -112,6 +124,19 @@ size_t Disassembler::mov_3(const char *head) {
   return len;
 }
 
+size_t Disassembler::push_1(const char *head) {
+  Inst inst;
+  inst.mod = head[1] >> 6;
+  inst.rm = head[1];
+
+  const size_t len = 2 + get_extended_len(inst);
+  print_bytes(head, len);
+  cout << "push ";
+  cout << get_rm_string(inst, &head[2]);
+
+  return len;
+}
+
 size_t Disassembler::push_2(const char *head) {
   Inst inst;
   inst.reg = head[0];
@@ -121,6 +146,41 @@ size_t Disassembler::push_2(const char *head) {
   print_bytes(head, len);
   cout << "push ";
   cout << get_reg_name(inst);
+
+  return len;
+}
+
+size_t Disassembler::pop_2(const char *head) {
+  Inst inst;
+  inst.reg = head[0];
+  inst.w = 1;
+
+  const size_t len = 1;
+  print_bytes(head, len);
+  cout << "pop ";
+  cout << get_reg_name(inst);
+
+  return len;
+}
+
+size_t Disassembler::in_1(const char *head) {
+  Inst inst;
+  inst.w = head[0];
+
+  const size_t len = 2;
+  print_bytes(head, len);
+  cout << "in ??, ??"; // FIXME
+
+  return len;
+}
+
+size_t Disassembler::in_2(const char *head) {
+  Inst inst;
+  inst.w = head[0];
+
+  const size_t len = 1;
+  print_bytes(head, len);
+  cout << "in ??, ??"; // FIXME
 
   return len;
 }
@@ -218,11 +278,30 @@ size_t Disassembler::shl_1(const char *head) {
   inst.mod = head[1] >> 6;
   inst.rm = head[1];
 
-
   const size_t len = 2;
   print_bytes(head, len);
   cout << "shl ";
   cout << get_rm_string(inst) << ", " << (inst.v ? "[cl]" : "1");
+
+  return len;
+}
+
+size_t Disassembler::and_1(const char *head) {
+  Inst inst;
+  inst.d = head[0] >> 1;
+  inst.w = head[0];
+  inst.mod = head[1] >> 6;
+  inst.reg = head[1] >> 3;
+  inst.rm = head[1];
+
+  const size_t len = 2 + get_extended_len(inst);
+  print_bytes(head, len);
+  cout << "and ";
+  if (inst.d) {
+    cout << get_reg_name(inst) << ", " << get_rm_string(inst, &head[2]);
+  } else {
+    cout << get_rm_string(inst, &head[2]) << ", " << get_reg_name(inst);
+  }
 
   return len;
 }
@@ -313,6 +392,14 @@ size_t Disassembler::jmp_2(const char *head) {
   return len;
 }
 
+size_t Disassembler::je_1(const char *head) {
+  const size_t len = 2;
+  print_bytes(head, len);
+  cout << "je ";
+  print_data_wide(ti + len + head[1]);
+  return len;
+}
+
 size_t Disassembler::jl_1(const char *head) {
   const size_t len = 2;
   print_bytes(head, len);
@@ -394,9 +481,12 @@ string Disassembler::get_rm_string(const Inst &inst, const char *extended) {
   if (inst.mod == 0b00 && inst.rm == 0b110) {
     oss << setfill('0') << setw(4) << hex << static_cast<short>(get_data_wide(extended));
     ea = oss.str();
-  } else if (disp != 0) {
+  } else if (disp > 0) {
     oss << hex << disp;
     ea += "+" + oss.str();
+  } else if (disp < 0) {
+    oss << hex << -disp;
+    ea += "-" + oss.str();
   }
 
   return "[" + ea + "]";
