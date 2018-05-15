@@ -23,15 +23,23 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     print_line_number(i);
 
     const char *head = &text[i];
+    const unsigned short top = head[0] & 0xff;
+    const unsigned short dbl = (head[0] << 8 & 0xff00) + (head[1] & 0xff);
 
-    if      ((*head >> 2 &   0b111111) ==   0b100010) i += mov_1(head);
-    else if ((*head >> 4 &     0b1111) ==     0b1011) i += mov_3(head);
-    else if ((*head      & 0b11111111) == 0b10001101) i += lea_1(head);
-    else if ((*head >> 2 &   0b111111) ==   0b000000) i += add_1(head);
-    else if ((*head >> 2 &   0b111111) ==   0b001100) i += xor_1(head);
-    else if ((*head      & 0b11111111) == 0b11001101) i += int_1(head);
+    if      ((top & 0b11111100)
+                 == 0b10001000) i += mov_1(head);
+    else if ((top & 0b11110000)
+                 == 0b10110000) i += mov_3(head);
+    else if ((top & 0b11111111)
+                 == 0b10001101) i += lea_1(head);
+    else if ((top & 0b11111100)
+                 == 0b00000000) i += add_1(head);
+    else if ((top & 0b11111100)
+                 == 0b00110000) i += xor_1(head);
+    else if ((top & 0b11111111)
+                 == 0b11001101) i += int_1(head);
     else {
-      print_byte(*head);
+      print_byte(head[0]);
       cout << "\t is not implemented";
       i++;
     }
