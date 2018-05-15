@@ -26,6 +26,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
 
     if      ((*head >> 2 &   0b111111) ==   0b100010) i += mov_1(head);
     else if ((*head >> 4 &     0b1111) ==     0b1011) i += mov_3(head);
+    else if ((*head      & 0b11111111) == 0b10001101) i += lea_1(head);
     else if ((*head >> 2 &   0b111111) ==   0b000000) i += add_1(head);
     else if ((*head >> 2 &   0b111111) ==   0b001100) i += xor_1(head);
     else if ((*head      & 0b11111111) == 0b11001101) i += int_1(head);
@@ -43,8 +44,8 @@ size_t Disassembler::mov_1(const char *head) {
   Inst inst;
   inst.d = head[0] >> 1;
   inst.w = head[0];
-  inst.mod = head[1] >> 6 & 0b111;
-  inst.reg = head[1] >> 3 & 0b111;
+  inst.mod = head[1] >> 6;
+  inst.reg = head[1] >> 3;
   inst.rm = head[1];
 
   const size_t len = 2;
@@ -80,6 +81,20 @@ size_t Disassembler::mov_3(const char *head) {
   } else {
     print_data_narrow(inst.data.narrow);
   }
+
+  return len;
+}
+
+size_t Disassembler::lea_1(const char *head) {
+  Inst inst;
+  inst.mod = head[1] >> 6;
+  inst.reg = head[1] >> 3;
+  inst.rm = head[1];
+
+  const size_t len = inst.mod == 0b01 ? 3 : 2;
+  print_bytes(head, len);
+  cout << "\t lea ";
+  cout << get_reg_name(inst) << ", " << get_rm_string(inst, &head[2]);
 
   return len;
 }
@@ -148,14 +163,14 @@ string Disassembler::get_reg_name(const Inst &inst, const bool is_rm) {
   }
 }
 
-string Disassembler::get_rm_string(const Inst &inst) {
+string Disassembler::get_rm_string(const Inst &inst, const char *extended) {
   unsigned char disp = 0;
 
   switch (inst.mod & 0b11) {
     case 0b11: return get_reg_name(inst, true);
     case 0b00: disp = 0; break;
-    case 0b10: return "[??]";
-    case 0b01: return "[??]";
+    case 0b10: disp = extended[0]; break;
+    case 0b01: disp = extended[0]; break;
   }
 
   string ea;
