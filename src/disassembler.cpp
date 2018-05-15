@@ -48,6 +48,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b01110011) ti += jnb_1(head);
     else if ((top & 0b11111111)
                  == 0b11001101) ti += int_1(head);
+    else if ((top & 0b11111111)
+                 == 0b11110100) ti += hlt_1(head);
     else {
       print_byte(head[0]);
       cout << "\t is not implemented";
@@ -229,6 +231,13 @@ size_t Disassembler::int_1(const char *head) {
   print_bytes(head, len);
   cout << "\t int ";
   print_data_narrow(head[1]);
+  return len;
+}
+
+size_t Disassembler::hlt_1(const char *head) {
+  const size_t len = 1;
+  print_bytes(head, len);
+  cout << "\t hlt";
   return len;
 }
 

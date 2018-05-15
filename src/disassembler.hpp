@@ -42,6 +42,7 @@ private:
   size_t jne_1(const char *);
   size_t jnb_1(const char *);
   size_t int_1(const char *);
+  size_t hlt_1(const char *);
   string get_reg_name(const Inst &, const bool is_rm = false);
   string get_rm_string(const Inst &, const char *extended = nullptr);
   void set_data(Inst &, const char *head, const bool is_wide);
