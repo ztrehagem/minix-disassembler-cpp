@@ -6,7 +6,7 @@
 
 using namespace std;
 
-struct info {
+struct Inst {
   unsigned w:1;
   unsigned d:1;
   unsigned reg:3;
@@ -30,9 +30,10 @@ private:
   void analyze_text(const char text[], const size_t len);
   size_t mov_3(const char *head);
   size_t add_1(const char *head);
+  size_t xor_1(const char *head);
   size_t int_1(const char *head);
-  string get_reg_name(const struct info &);
-  string get_rm_string(const struct info &);
+  string get_reg_name(const Inst &);
+  string get_rm_string(const Inst &);
   void print_data_wide(const unsigned short data);
   void print_data_narrow(const unsigned char data);
   void print_line_number(const size_t);
