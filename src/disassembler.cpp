@@ -28,6 +28,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b10001000) ti += mov_1(head);
     else if ((top & 0b11110000)
                  == 0b10110000) ti += mov_3(head);
+    else if ((top & 0b11111000)
+                 == 0b01010000) ti += push_2(head);
     else if ((top & 0b11111111)
                  == 0b10001101) ti += lea_1(head);
     else if ((top & 0b11111100)
@@ -38,6 +40,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b1111011000000000) ti += test_2(head);
     else if ((top & 0b11111100)
                  == 0b00110000) ti += xor_1(head);
+    else if ((top & 0b11111111)
+                 == 0b11101000) ti += call_1(head);
     else if ((top & 0b11111111)
                  == 0b01110101) ti += jne_1(head);
     else if ((top & 0b11111111)
@@ -86,6 +90,19 @@ size_t Disassembler::mov_3(const char *head) {
   cout << "\t mov ";
   cout << get_reg_name(inst) << ", ";
   print_data(inst, inst.w);
+
+  return len;
+}
+
+size_t Disassembler::push_2(const char *head) {
+  Inst inst;
+  inst.reg = head[0];
+  inst.w = 1;
+
+  const size_t len = 1;
+  print_bytes(head, len);
+  cout << "\t push ";
+  cout << get_reg_name(inst);
 
   return len;
 }
@@ -177,6 +194,17 @@ size_t Disassembler::xor_1(const char *head) {
     cout << get_rm_string(inst) << ", " << get_reg_name(inst);
   }
 
+  return len;
+}
+
+size_t Disassembler::call_1(const char *head) {
+  Inst inst;
+  set_data(inst, &head[1], true);
+
+  const size_t len = 3;
+  print_bytes(head, len);
+  cout << "\t call ";
+  print_data_wide(ti + len + inst.data.wide);
   return len;
 }
 

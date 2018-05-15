@@ -30,16 +30,18 @@ private:
   size_t ti = 0;
 
   void analyze_text(const char text[], const size_t len);
-  size_t mov_1(const char *head);
-  size_t mov_3(const char *head);
-  size_t lea_1(const char *head);
-  size_t add_1(const char *head);
-  size_t cmp_2(const char *head);
-  size_t test_2(const char *head);
-  size_t xor_1(const char *head);
-  size_t jne_1(const char *head);
-  size_t jnb_1(const char *head);
-  size_t int_1(const char *head);
+  size_t mov_1(const char *);
+  size_t mov_3(const char *);
+  size_t push_2(const char *);
+  size_t lea_1(const char *);
+  size_t add_1(const char *);
+  size_t cmp_2(const char *);
+  size_t test_2(const char *);
+  size_t xor_1(const char *);
+  size_t call_1(const char *);
+  size_t jne_1(const char *);
+  size_t jnb_1(const char *);
+  size_t int_1(const char *);
   string get_reg_name(const Inst &, const bool is_rm = false);
   string get_rm_string(const Inst &, const char *extended = nullptr);
   void set_data(Inst &, const char *head, const bool is_wide);
