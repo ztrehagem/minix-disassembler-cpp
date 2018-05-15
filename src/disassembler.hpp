@@ -8,6 +8,7 @@ using namespace std;
 
 struct Inst {
   unsigned s:1;
+  unsigned v:1;
   unsigned w:1;
   unsigned d:1;
   unsigned reg:3;
@@ -36,10 +37,17 @@ private:
   size_t lea_1(const char *);
   size_t add_1(const char *);
   size_t add_2(const char *);
+  size_t dec_2(const char *);
   size_t cmp_2(const char *);
+  size_t shl_1(const char *);
   size_t test_2(const char *);
+  size_t or_3(const char *);
   size_t xor_1(const char *);
   size_t call_1(const char *);
+  size_t call_2(const char *);
+  size_t jmp_1(const char *);
+  size_t jmp_2(const char *);
+  size_t jl_1(const char *);
   size_t jne_1(const char *);
   size_t jnb_1(const char *);
   size_t int_1(const char *);
@@ -49,6 +57,7 @@ private:
   void set_data(Inst &, const char *head, const bool is_wide);
   unsigned short get_data_wide(const char *head);
   unsigned char get_data_narrow(const char *head);
+  size_t get_extended_len(const Inst &);
   void print_data(const Inst &, const bool is_wide, const bool as_natural = false);
   void print_data_wide(const unsigned short data, const bool as_natural = false);
   void print_data_narrow(const unsigned char data, const bool as_natural = false);
