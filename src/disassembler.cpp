@@ -17,33 +17,35 @@ void Disassembler::disassemble() {
 }
 
 void Disassembler::analyze_text(const char text[], const size_t len) {
-  size_t i = 0;
+  while (ti < len) {
+    print_line_number(ti);
 
-  while (i < len) {
-    print_line_number(i);
-
-    const char *head = &text[i];
+    const char *head = &text[ti];
     const unsigned short top = head[0] & 0xff;
     const unsigned short dbl = (head[0] << 8 & 0xff00) + (head[1] & 0xff);
 
     if      ((top & 0b11111100)
-                 == 0b10001000) i += mov_1(head);
+                 == 0b10001000) ti += mov_1(head);
     else if ((top & 0b11110000)
-                 == 0b10110000) i += mov_3(head);
+                 == 0b10110000) ti += mov_3(head);
     else if ((top & 0b11111111)
-                 == 0b10001101) i += lea_1(head);
+                 == 0b10001101) ti += lea_1(head);
     else if ((top & 0b11111100)
-                 == 0b00000000) i += add_1(head);
+                 == 0b00000000) ti += add_1(head);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000111000) i += cmp_2(head);
+                 == 0b1000000000111000) ti += cmp_2(head);
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111011000000000) ti += test_2(head);
     else if ((top & 0b11111100)
-                 == 0b00110000) i += xor_1(head);
+                 == 0b00110000) ti += xor_1(head);
     else if ((top & 0b11111111)
-                 == 0b11001101) i += int_1(head);
+                 == 0b01110011) ti += jnb_1(head);
+    else if ((top & 0b11111111)
+                 == 0b11001101) ti += int_1(head);
     else {
       print_byte(head[0]);
       cout << "\t is not implemented";
-      i++;
+      ti++;
     }
 
     cout << endl;
@@ -75,22 +77,13 @@ size_t Disassembler::mov_3(const char *head) {
   Inst inst;
   inst.w = head[0] >> 3;
   inst.reg = head[0];
-  if (inst.w) {
-    inst.data.wide = (head[1] & 0xff) + ((head[2] & 0xff) << 8);
-  } else {
-    inst.data.narrow = head[1] & 0xff;
-  }
+  set_data(inst, &head[1], inst.w);
 
   const size_t len = inst.w ? 3 : 2;
   print_bytes(head, len);
   cout << "\t mov ";
   cout << get_reg_name(inst) << ", ";
-
-  if (inst.w) {
-    print_data_wide(inst.data.wide);
-  } else {
-    print_data_narrow(inst.data.narrow);
-  }
+  print_data(inst, inst.w);
 
   return len;
 }
@@ -137,21 +130,29 @@ size_t Disassembler::cmp_2(const char *head) {
   inst.w = head[0];
   inst.mod = head[1] >> 6;
   inst.rm = head[1];
-  if (inst.w) {
-    inst.data.wide = (head[2] & 0xff) + ((head[3] & 0xff) << 8);
-  } else {
-    inst.data.narrow = head[2] & 0xff;
-  }
+  set_data(inst, &head[2], inst.w);
 
   const size_t len = inst.w ? 4 : 3;
   print_bytes(head, len);
   cout << "\t cmp ";
   cout << get_reg_name(inst) << ", ";
-  if (inst.w) {
-    print_data_wide(inst.data.wide);
-  } else {
-    print_data_narrow(inst.data.narrow);
-  }
+  print_data(inst, inst.w);
+
+  return len;
+}
+
+size_t Disassembler::test_2(const char *head) {
+  Inst inst;
+  inst.w = head[0];
+  inst.mod = head[1] >> 6;
+  inst.rm = head[1];
+  set_data(inst, &head[2], inst.w);
+
+  const size_t len = inst.w ? 4 : 3;
+  print_bytes(head, len);
+  cout << "\t test ";
+  cout << get_reg_name(inst) << ", ";
+  print_data(inst, inst.w, true);
 
   return len;
 }
@@ -174,6 +175,14 @@ size_t Disassembler::xor_1(const char *head) {
     cout << get_rm_string(inst) << ", " << get_reg_name(inst);
   }
 
+  return len;
+}
+
+size_t Disassembler::jnb_1(const char *head) {
+  const size_t len = 2;
+  print_bytes(head, len);
+  cout << "\t jnb ";
+  print_data_wide(ti + len + head[1]);
   return len;
 }
 
@@ -229,12 +238,46 @@ string Disassembler::get_rm_string(const Inst &inst, const char *extended) {
   return "[" + ea + "]";
 }
 
-void Disassembler::print_data_wide(const unsigned short data) {
-  cout << setfill('0') << setw(4) << hex << static_cast<int>(data & 0xffff);
+void Disassembler::set_data(Inst &inst, const char *head, const bool is_wide) {
+  if (is_wide) {
+    inst.data.wide = get_data_wide(head);
+  } else {
+    inst.data.narrow = get_data_narrow(head);
+  }
 }
 
-void Disassembler::print_data_narrow(const unsigned char data) {
-  cout << setfill('0') << setw(2) << hex << static_cast<int>(data & 0xff);
+unsigned short Disassembler::get_data_wide(const char *head) {
+  return (head[0] & 0xff) + ((head[1] & 0xff) << 8);
+}
+
+unsigned char Disassembler::get_data_narrow(const char *head) {
+  return head[0] & 0xff;
+}
+
+void Disassembler::print_data(const Inst &inst, const bool is_wide, const bool as_natural) {
+  if (is_wide) {
+    print_data_wide(inst.data.wide, as_natural);
+  } else {
+    print_data_narrow(inst.data.narrow, as_natural);
+  }
+}
+
+void Disassembler::print_data_wide(const unsigned short data, const bool as_natural) {
+  unsigned int v = data & 0xffff;
+  if (as_natural) {
+    cout << v;
+  } else {
+    cout << setfill('0') << setw(4) << hex << v;
+  }
+}
+
+void Disassembler::print_data_narrow(const unsigned char data, const bool as_natural) {
+  unsigned int v = data & 0xff;
+  if (as_natural) {
+    cout << v;
+  } else {
+    cout << setfill('0') << setw(2) << hex << v;
+  }
 }
 
 void Disassembler::print_line_number(const size_t n) {
