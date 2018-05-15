@@ -7,6 +7,7 @@
 using namespace std;
 
 struct Inst {
+  unsigned s:1;
   unsigned w:1;
   unsigned d:1;
   unsigned reg:3;
@@ -32,6 +33,7 @@ private:
   size_t mov_3(const char *head);
   size_t lea_1(const char *head);
   size_t add_1(const char *head);
+  size_t cmp_2(const char *head);
   size_t xor_1(const char *head);
   size_t int_1(const char *head);
   string get_reg_name(const Inst &, const bool is_rm = false);
