@@ -5,10 +5,17 @@ using namespace std;
 
 int main(int argc, char const *argv[]) {
 
-  ifstream ifs("./a.out");
+  if (argc < 2) {
+    cerr << "please assign .out (binary) file" << endl;
+    return 1;
+  }
+
+  const char *filename = argv[1];
+
+  ifstream ifs(filename);
 
   if (ifs.fail()) {
-    cerr << "'a.out' is not found" << endl;
+    cerr << "failed to open '" << filename << "'" << endl;
     return 1;
   }
 
