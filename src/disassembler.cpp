@@ -24,7 +24,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
 
     const char *head = &text[i];
 
-    if      ((*head >> 4 &     0b1111) ==     0b1011) i += mov_3(head);
+    if      ((*head >> 2 &   0b111111) ==   0b100010) i += mov_1(head);
+    else if ((*head >> 4 &     0b1111) ==     0b1011) i += mov_3(head);
     else if ((*head >> 2 &   0b111111) ==   0b000000) i += add_1(head);
     else if ((*head >> 2 &   0b111111) ==   0b001100) i += xor_1(head);
     else if ((*head      & 0b11111111) == 0b11001101) i += int_1(head);
@@ -36,6 +37,27 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
 
     cout << endl;
   }
+}
+
+size_t Disassembler::mov_1(const char *head) {
+  Inst inst;
+  inst.d = head[0] >> 1;
+  inst.w = head[0];
+  inst.mod = head[1] >> 6 & 0b111;
+  inst.reg = head[1] >> 3 & 0b111;
+  inst.rm = head[1];
+
+  const size_t len = 2;
+  print_bytes(head, len);
+  cout << "\t mov ";
+
+  if (inst.d) {
+    cout << get_reg_name(inst) << ", " << get_rm_string(inst);
+  } else {
+    cout << get_rm_string(inst) << ", " << get_reg_name(inst);
+  }
+
+  return len;
 }
 
 size_t Disassembler::mov_3(const char *head) {
@@ -112,24 +134,16 @@ size_t Disassembler::int_1(const char *head) {
   return len;
 }
 
-string Disassembler::get_reg_name(const Inst &inst) {
-  switch (((inst.w << 3) + inst.reg) & 0b1111) {
-    case 0b1000: return "ax";
-    case 0b1001: return "cx";
-    case 0b1010: return "dx";
-    case 0b1011: return "bx";
-    case 0b1100: return "sp";
-    case 0b1101: return "bp";
-    case 0b1110: return "si";
-    case 0b1111: return "di";
-    case 0b0000: return "al";
-    case 0b0001: return "cl";
-    case 0b0010: return "dl";
-    case 0b0011: return "bl";
-    case 0b0100: return "ah";
-    case 0b0101: return "ch";
-    case 0b0110: return "dh";
-    case 0b0111: return "bh";
+string Disassembler::get_reg_name(const Inst &inst, const bool is_rm) {
+  switch (is_rm ? inst.rm : inst.reg) {
+    case 0b000: return inst.w ? "ax" : "al";
+    case 0b001: return inst.w ? "cx" : "cl";
+    case 0b010: return inst.w ? "dx" : "dl";
+    case 0b011: return inst.w ? "bx" : "bl";
+    case 0b100: return inst.w ? "sp" : "ah";
+    case 0b101: return inst.w ? "bp" : "ch";
+    case 0b110: return inst.w ? "si" : "dh";
+    case 0b111: return inst.w ? "di" : "bh";
     default: return "";
   }
 }
@@ -138,7 +152,7 @@ string Disassembler::get_rm_string(const Inst &inst) {
   unsigned char disp = 0;
 
   switch (inst.mod & 0b11) {
-    case 0b11: return get_reg_name(inst);
+    case 0b11: return get_reg_name(inst, true);
     case 0b00: disp = 0; break;
     case 0b10: return "[??]";
     case 0b01: return "[??]";

@@ -28,11 +28,12 @@ private:
   struct exec header;
 
   void analyze_text(const char text[], const size_t len);
+  size_t mov_1(const char *head);
   size_t mov_3(const char *head);
   size_t add_1(const char *head);
   size_t xor_1(const char *head);
   size_t int_1(const char *head);
-  string get_reg_name(const Inst &);
+  string get_reg_name(const Inst &, const bool is_rm = false);
   string get_rm_string(const Inst &);
   void print_data_wide(const unsigned short data);
   void print_data_narrow(const unsigned char data);
