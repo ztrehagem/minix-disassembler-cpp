@@ -37,6 +37,7 @@ private:
   size_t cmp_2(const char *head);
   size_t test_2(const char *head);
   size_t xor_1(const char *head);
+  size_t jne_1(const char *head);
   size_t jnb_1(const char *head);
   size_t int_1(const char *head);
   string get_reg_name(const Inst &, const bool is_rm = false);

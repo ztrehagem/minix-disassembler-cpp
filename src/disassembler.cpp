@@ -7,7 +7,7 @@ using namespace std;
 
 void Disassembler::disassemble() {
   ifs.read(reinterpret_cast<char *>(&header), sizeof(header));
-  cout << "a_text = " << header.a_text << endl;
+  // cout << "a_text = " << header.a_text << endl;
 
   char text[header.a_text];
   ifs.read(text, sizeof(text));
@@ -38,6 +38,8 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b1111011000000000) ti += test_2(head);
     else if ((top & 0b11111100)
                  == 0b00110000) ti += xor_1(head);
+    else if ((top & 0b11111111)
+                 == 0b01110101) ti += jne_1(head);
     else if ((top & 0b11111111)
                  == 0b01110011) ti += jnb_1(head);
     else if ((top & 0b11111111)
@@ -135,7 +137,7 @@ size_t Disassembler::cmp_2(const char *head) {
   const size_t len = inst.w ? 4 : 3;
   print_bytes(head, len);
   cout << "\t cmp ";
-  cout << get_reg_name(inst) << ", ";
+  cout << get_rm_string(inst) << ", ";
   print_data(inst, inst.w);
 
   return len;
@@ -175,6 +177,14 @@ size_t Disassembler::xor_1(const char *head) {
     cout << get_rm_string(inst) << ", " << get_reg_name(inst);
   }
 
+  return len;
+}
+
+size_t Disassembler::jne_1(const char *head) {
+  const size_t len = 2;
+  print_bytes(head, len);
+  cout << "\t jne ";
+  print_data_wide(ti + len + head[1]);
   return len;
 }
 
