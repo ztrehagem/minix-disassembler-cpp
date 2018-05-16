@@ -19,12 +19,43 @@ struct Inst {
     unsigned wide:16;
     unsigned narrow:8;
   } data;
+  signed disp:16;
+  size_t disp_size;
+
+  Inst() {
+    s = 0;
+    v = 0;
+    w = 0;
+    d = 0;
+    reg = 0;
+    mod = 0;
+    rm = 0;
+    disp = 0;
+    disp_size = 0;
+  }
+
+  bool is_wide_data();
+
+  void set_mod_sec(const char *head);
+  string get_reg_name(const bool is_rm = false);
+  string get_rm_str();
+  string get_data_str(const bool as_natural = false);
 };
 
 class Disassembler {
 public:
   Disassembler(ifstream &ifs) : ifs(ifs) {};
   void disassemble();
+
+  static void set_data(Inst &, const char *head, const bool is_wide);
+  static unsigned short get_data_wide(const char *head);
+  static unsigned char get_data_narrow(const char *head);
+  static size_t get_extended_len(const Inst &);
+  static string data_str_wide(const unsigned short data, const bool as_natural = false);
+  static string data_str_narrow(const unsigned char data, const bool as_natural = false);
+  static string line_number_str(const size_t);
+  static string instruction_str(const char *head, const size_t len);
+  static string hex_str(const unsigned int value, const size_t w = 0);
 
 private:
   ifstream& ifs;
@@ -64,18 +95,4 @@ private:
   size_t jnb_1(const char *, const size_t);
   size_t int_1(const char *);
   size_t hlt_1(const char *);
-
-  string get_reg_name(const Inst &, const bool is_rm = false);
-  string get_rm_string(const Inst &, const char *extended = nullptr);
-  void set_mod_sec(Inst &, const char byte);
-  void set_data(Inst &, const char *head, const bool is_wide);
-  unsigned short get_data_wide(const char *head);
-  unsigned char get_data_narrow(const char *head);
-  size_t get_extended_len(const Inst &);
-  string inst_data_str(const Inst &, const bool is_wide, const bool as_natural = false);
-  string data_str_wide(const unsigned short data, const bool as_natural = false);
-  string data_str_narrow(const unsigned char data, const bool as_natural = false);
-  string line_number_str(const size_t);
-  string instruction_str(const char *head, const size_t len);
-  string hex_str(const unsigned int value, const size_t w = 0);
 };
