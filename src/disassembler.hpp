@@ -29,7 +29,6 @@ public:
 private:
   ifstream& ifs;
   struct exec header;
-  size_t ti = 0;
 
   void analyze_text(const char text[], const size_t len);
   size_t mov_1(const char *);
@@ -53,20 +52,22 @@ private:
   size_t or_1(const char *);
   size_t or_3(const char *);
   size_t xor_1(const char *);
-  size_t call_1(const char *);
+  size_t call_1(const char *, const size_t);
   size_t call_2(const char *);
-  size_t jmp_1(const char *);
-  size_t jmp_2(const char *);
+  size_t jmp_1(const char *, const size_t);
+  size_t jmp_2(const char *, const size_t);
   size_t ret_1(const char *);
-  size_t je_1(const char *);
-  size_t jl_1(const char *);
-  size_t jne_1(const char *);
-  size_t jnl_1(const char *);
-  size_t jnb_1(const char *);
+  size_t je_1(const char *, const size_t);
+  size_t jl_1(const char *, const size_t);
+  size_t jne_1(const char *, const size_t);
+  size_t jnl_1(const char *, const size_t);
+  size_t jnb_1(const char *, const size_t);
   size_t int_1(const char *);
   size_t hlt_1(const char *);
+
   string get_reg_name(const Inst &, const bool is_rm = false);
   string get_rm_string(const Inst &, const char *extended = nullptr);
+  void set_mod_sec(Inst &, const char byte);
   void set_data(Inst &, const char *head, const bool is_wide);
   unsigned short get_data_wide(const char *head);
   unsigned char get_data_narrow(const char *head);
