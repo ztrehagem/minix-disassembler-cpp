@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <string>
+#include <sstream>
 #include "a.out.hpp"
 
 using namespace std;
@@ -70,10 +71,10 @@ private:
   unsigned short get_data_wide(const char *head);
   unsigned char get_data_narrow(const char *head);
   size_t get_extended_len(const Inst &);
-  void print_data(const Inst &, const bool is_wide, const bool as_natural = false);
-  void print_data_wide(const unsigned short data, const bool as_natural = false);
-  void print_data_narrow(const unsigned char data, const bool as_natural = false);
-  void print_line_number(const size_t);
-  void print_bytes(const char *head, const size_t len);
-  void print_byte(const char);
+  string inst_data_str(const Inst &, const bool is_wide, const bool as_natural = false);
+  string data_str_wide(const unsigned short data, const bool as_natural = false);
+  string data_str_narrow(const unsigned char data, const bool as_natural = false);
+  string line_number_str(const size_t);
+  string instruction_str(const char *head, const size_t len);
+  string hex_str(const unsigned int value, const size_t w = 0);
 };
