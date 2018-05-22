@@ -28,7 +28,7 @@ struct Inst {
   Inst() {
     s = 0;
     v = 0;
-    w = 0;
+    w = 1;
     d = 0;
     reg = 0;
     mod = 0;
@@ -40,13 +40,14 @@ struct Inst {
     has_data_sec = false;
   }
 
-  bool is_wide_data();
-
   void set_mod_sec(const char *head);
   void set_data(const char *head);
+  bool is_wide_data();
+  size_t get_inst_len();
   string get_reg_name(const bool is_rm = false);
   string get_rm_str();
   string get_data_str(const bool as_natural = false);
+  string get_dist_str();
 };
 
 class Disassembler {
@@ -54,7 +55,6 @@ public:
   Disassembler(ifstream &ifs) : ifs(ifs) {};
   void disassemble();
 
-  static void set_data(Inst &, const char *head, const bool is_wide);
   static unsigned short get_data_wide(const char *head);
   static unsigned char get_data_narrow(const char *head);
   static size_t get_extended_len(const Inst &);
