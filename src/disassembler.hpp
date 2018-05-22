@@ -21,6 +21,9 @@ struct Inst {
   } data;
   signed disp:16;
   size_t disp_size;
+  size_t data_size;
+  bool has_mod_sec;
+  bool has_data_sec;
 
   Inst() {
     s = 0;
@@ -32,11 +35,15 @@ struct Inst {
     rm = 0;
     disp = 0;
     disp_size = 0;
+    data_size = 0;
+    has_mod_sec = false;
+    has_data_sec = false;
   }
 
   bool is_wide_data();
 
   void set_mod_sec(const char *head);
+  void set_data(const char *head);
   string get_reg_name(const bool is_rm = false);
   string get_rm_str();
   string get_data_str(const bool as_natural = false);
@@ -83,16 +90,16 @@ private:
   size_t or_1(const char *);
   size_t or_3(const char *);
   size_t xor_1(const char *);
-  size_t call_1(const char *, const size_t);
+  size_t call_1(const char *, const size_t pc);
   size_t call_2(const char *);
-  size_t jmp_1(const char *, const size_t);
-  size_t jmp_2(const char *, const size_t);
+  size_t jmp_1(const char *, const size_t pc);
+  size_t jmp_2(const char *, const size_t pc);
   size_t ret_1(const char *);
-  size_t je_1(const char *, const size_t);
-  size_t jl_1(const char *, const size_t);
-  size_t jne_1(const char *, const size_t);
-  size_t jnl_1(const char *, const size_t);
-  size_t jnb_1(const char *, const size_t);
+  size_t je_1(const char *, const size_t pc);
+  size_t jl_1(const char *, const size_t pc);
+  size_t jne_1(const char *, const size_t pc);
+  size_t jnl_1(const char *, const size_t pc);
+  size_t jnb_1(const char *, const size_t pc);
   size_t int_1(const char *);
   size_t hlt_1(const char *);
 };

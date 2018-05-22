@@ -7,6 +7,7 @@
 using namespace std;
 
 void Inst::set_mod_sec(const char *head) {
+  has_mod_sec = true;
   mod = head[1] >> 6;
   reg = head[1] >> 3;
   rm = head[1];
@@ -17,6 +18,16 @@ void Inst::set_mod_sec(const char *head) {
   } else if (mod == 0b01) {
     disp = static_cast<signed char>(Disassembler::get_data_narrow(&head[2]));
     disp_size = 1;
+  }
+}
+
+void Inst::set_data(const char *head) {
+  const size_t offset = 1 + has_mod_sec + disp_size;
+  has_data_sec = true;
+  if (is_wide_data()) {
+    data.wide = Disassembler::get_data_wide(&head[offset]);
+  } else {
+    data.narrow = Disassembler::get_data_narrow(&head[offset]);
   }
 }
 
@@ -89,84 +100,84 @@ void Disassembler::disassemble() {
 }
 
 void Disassembler::analyze_text(const char text[], const size_t len) {
-  size_t ti = 0;
+  size_t pc = 0;
 
-  while (ti < len) {
-    cout << line_number_str(ti);
+  while (pc < len) {
+    cout << line_number_str(pc);
 
-    const char *head = &text[ti];
+    const char *head = &text[pc];
     const unsigned short top = head[0] & 0xff;
     const unsigned short dbl = (head[0] << 8 & 0xff00) + (head[1] & 0xff);
 
     if      ((top & 0b11111100)
-                 == 0b10001000) ti += mov_1(head);
+                 == 0b10001000) pc += mov_1(head);
     else if ((top & 0b11110000)
-                 == 0b10110000) ti += mov_3(head);
+                 == 0b10110000) pc += mov_3(head);
     else if ((dbl & 0b1111111100111000)
-                 == 0b1111111100110000) ti += push_1(head);
+                 == 0b1111111100110000) pc += push_1(head);
     else if ((top & 0b11111000)
-                 == 0b01010000) ti += push_2(head);
+                 == 0b01010000) pc += push_2(head);
     else if ((top & 0b11111000)
-                 == 0b01011000) ti += pop_2(head);
+                 == 0b01011000) pc += pop_2(head);
     else if ((top & 0b11111110)
-                 == 0b11100100) ti += in_1(head);
+                 == 0b11100100) pc += in_1(head);
     else if ((top & 0b11111110)
-                 == 0b11101100) ti += in_2(head);
+                 == 0b11101100) pc += in_2(head);
     else if ((top & 0b11111111)
-                 == 0b10001101) ti += lea_1(head);
+                 == 0b10001101) pc += lea_1(head);
     else if ((top & 0b11111100)
-                 == 0b00000000) ti += add_1(head);
+                 == 0b00000000) pc += add_1(head);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000000000) ti += add_2(head);
+                 == 0b1000000000000000) pc += add_2(head);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000101000) ti += sub_2(head);
+                 == 0b1000000000101000) pc += sub_2(head);
     else if ((top & 0b11111100)
-                 == 0b00011000) ti += ssb_1(head);
+                 == 0b00011000) pc += ssb_1(head);
     else if ((top & 0b11111000)
-                 == 0b01001000) ti += dec_2(head);
+                 == 0b01001000) pc += dec_2(head);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111011000011000) ti += neg_1(head);
+                 == 0b1111011000011000) pc += neg_1(head);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000111000) ti += cmp_2(head);
+                 == 0b1000000000111000) pc += cmp_2(head);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1101000000100000) ti += shl_1(head);
+                 == 0b1101000000100000) pc += shl_1(head);
     else if ((top & 0b11111100)
-                 == 0b00100000) ti += and_1(head);
+                 == 0b00100000) pc += and_1(head);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111011000000000) ti += test_2(head);
+                 == 0b1111011000000000) pc += test_2(head);
     else if ((top & 0b11111100)
-                 == 0b00001000) ti += or_1(head);
+                 == 0b00001000) pc += or_1(head);
     else if ((top & 0b11111110)
-                 == 0b00001100) ti += or_3(head);
+                 == 0b00001100) pc += or_3(head);
     else if ((top & 0b11111100)
-                 == 0b00110000) ti += xor_1(head);
+                 == 0b00110000) pc += xor_1(head);
     else if ((top & 0b11111111)
-                 == 0b11101000) ti += call_1(head, ti);
+                 == 0b11101000) pc += call_1(head, pc);
     else if ((dbl & 0b1111111100111000)
-                 == 0b1111111100010000) ti += call_2(head);
+                 == 0b1111111100010000) pc += call_2(head);
     else if ((top & 0b11111111)
-                 == 0b11101001) ti += jmp_1(head, ti);
+                 == 0b11101001) pc += jmp_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b11101011) ti += jmp_2(head, ti);
+                 == 0b11101011) pc += jmp_2(head, pc);
     else if ((top & 0b11111111)
-                 == 0b11000011) ti += ret_1(head);
+                 == 0b11000011) pc += ret_1(head);
     else if ((top & 0b11111111)
-                 == 0b01110100) ti += je_1(head, ti);
+                 == 0b01110100) pc += je_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b01111100) ti += jl_1(head, ti);
+                 == 0b01111100) pc += jl_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b01110101) ti += jne_1(head, ti);
+                 == 0b01110101) pc += jne_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b01111101) ti += jnl_1(head, ti);
+                 == 0b01111101) pc += jnl_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b01110011) ti += jnb_1(head, ti);
+                 == 0b01110011) pc += jnb_1(head, pc);
     else if ((top & 0b11111111)
-                 == 0b11001101) ti += int_1(head);
+                 == 0b11001101) pc += int_1(head);
     else if ((top & 0b11111111)
-                 == 0b11110100) ti += hlt_1(head);
+                 == 0b11110100) pc += hlt_1(head);
     else {
       cout << instruction_str(head, 1);
-      ti++;
+      pc++;
     }
 
     cout << endl;
@@ -196,9 +207,9 @@ size_t Disassembler::mov_3(const char *head) {
   Inst inst;
   inst.w = head[0] >> 3;
   inst.reg = head[0];
-  set_data(inst, &head[1], inst.w);
+  inst.set_data(head);
 
-  const size_t len = inst.w ? 3 : 2;
+  const size_t len = inst.is_wide_data() ? 3 : 2;
   cout << instruction_str(head, len);
   cout << "mov ";
   cout << inst.get_reg_name() << ", ";
@@ -269,6 +280,7 @@ size_t Disassembler::in_2(const char *head) {
 
 size_t Disassembler::lea_1(const char *head) {
   Inst inst;
+  inst.w = 1;
   inst.set_mod_sec(head);
 
   const size_t len = 2 + inst.disp_size;
@@ -303,10 +315,9 @@ size_t Disassembler::add_2(const char *head) {
   inst.s = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec(head);
-  const bool is_wide = inst.s == 0 && inst.w == 1;
-  set_data(inst, &head[2 + inst.disp_size], is_wide);
+  inst.set_data(head);
 
-  const size_t len = (is_wide ? 4 : 3) + inst.disp_size;
+  const size_t len = (inst.is_wide_data() ? 4 : 3) + inst.disp_size;
   cout << instruction_str(head, len);
   cout << "add ";
   cout << inst.get_rm_str() << ", ";
@@ -320,10 +331,9 @@ size_t Disassembler::sub_2(const char *head) {
   inst.s = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec(head);
-  const bool is_wide = inst.s == 0 && inst.w == 1;
-  set_data(inst, &head[2 + inst.disp_size], is_wide);
+  inst.set_data(head);
 
-  const size_t len = (is_wide ? 4 : 3) + inst.disp_size;
+  const size_t len = (inst.is_wide_data() ? 4 : 3) + inst.disp_size;
   cout << instruction_str(head, len);
   cout << "sub ";
   cout << inst.get_rm_str() << ", ";
@@ -382,10 +392,9 @@ size_t Disassembler::cmp_2(const char *head) {
   inst.s = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec(head);
-  const bool is_wide = inst.s == 0 && inst.w == 1;
-  set_data(inst, &head[2 + inst.disp_size], is_wide);
+  inst.set_data(head);
 
-  const size_t len = (is_wide ? 4 : 3) + inst.disp_size;
+  const size_t len = (inst.is_wide_data() ? 4 : 3) + inst.disp_size;
   cout << instruction_str(head, len);
   cout << "cmp ";
   cout << inst.get_rm_str() << ", ";
@@ -430,9 +439,9 @@ size_t Disassembler::test_2(const char *head) {
   Inst inst;
   inst.w = head[0];
   inst.set_mod_sec(head);
-  set_data(inst, &head[2 + inst.disp_size], inst.w);
+  inst.set_data(head);
 
-  const size_t len = (inst.w ? 4 : 3) + inst.disp_size;
+  const size_t len = (inst.is_wide_data() ? 4 : 3) + inst.disp_size;
   cout << instruction_str(head, len);
   cout << "test ";
   cout << inst.get_rm_str() << ", ";
@@ -463,9 +472,9 @@ size_t Disassembler::or_1(const char *head) {
 size_t Disassembler::or_3(const char *head) {
   Inst inst;
   inst.w = head[0];
-  set_data(inst, &head[1], inst.w);
+  inst.set_data(head);
 
-  const size_t len = inst.w ? 3 : 2;
+  const size_t len = inst.is_wide_data() ? 3 : 2;
   cout << instruction_str(head, len);
   cout << "or ";
   cout << inst.get_data_str();
@@ -492,16 +501,17 @@ size_t Disassembler::xor_1(const char *head) {
   return len;
 }
 
-size_t Disassembler::call_1(const char *head, const size_t ti) {
+size_t Disassembler::call_1(const char *head, const size_t pc) {
   const size_t len = 3;
   cout << instruction_str(head, len);
   cout << "call ";
-  cout << data_str_wide(ti + len + get_data_wide(&head[1]));
+  cout << data_str_wide(pc + len + get_data_wide(&head[1]));
   return len;
 }
 
 size_t Disassembler::call_2(const char *head) {
   Inst inst;
+  inst.w = 1;
   inst.set_mod_sec(head);
 
   const size_t len = 2 + inst.disp_size;
@@ -511,19 +521,19 @@ size_t Disassembler::call_2(const char *head) {
   return len;
 }
 
-size_t Disassembler::jmp_1(const char *head, const size_t ti) {
+size_t Disassembler::jmp_1(const char *head, const size_t pc) {
   const size_t len = 3;
   cout << instruction_str(head, len);
   cout << "jmp ";
-  cout << data_str_wide(ti + len + static_cast<short>(get_data_wide(&head[1])));
+  cout << data_str_wide(pc + len + static_cast<short>(get_data_wide(&head[1])));
   return len;
 }
 
-size_t Disassembler::jmp_2(const char *head, const size_t ti) {
+size_t Disassembler::jmp_2(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "jmp short ";
-  cout << data_str_wide(ti + len + static_cast<char>(get_data_narrow(&head[1])));
+  cout << data_str_wide(pc + len + static_cast<char>(get_data_narrow(&head[1])));
   return len;
 }
 
@@ -534,43 +544,43 @@ size_t Disassembler::ret_1(const char *head) {
   return len;
 }
 
-size_t Disassembler::je_1(const char *head, const size_t ti) {
+size_t Disassembler::je_1(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "je ";
-  cout << data_str_wide(ti + len + head[1]);
+  cout << data_str_wide(pc + len + head[1]);
   return len;
 }
 
-size_t Disassembler::jl_1(const char *head, const size_t ti) {
+size_t Disassembler::jl_1(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "jl ";
-  cout << data_str_wide(ti + len + head[1]);
+  cout << data_str_wide(pc + len + head[1]);
   return len;
 }
 
-size_t Disassembler::jne_1(const char *head, const size_t ti) {
+size_t Disassembler::jne_1(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "jne ";
-  cout << data_str_wide(ti + len + head[1]);
+  cout << data_str_wide(pc + len + head[1]);
   return len;
 }
 
-size_t Disassembler::jnl_1(const char *head, const size_t ti) {
+size_t Disassembler::jnl_1(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "jnl ";
-  cout << data_str_wide(ti + len + head[1]);
+  cout << data_str_wide(pc + len + head[1]);
   return len;
 }
 
-size_t Disassembler::jnb_1(const char *head, const size_t ti) {
+size_t Disassembler::jnb_1(const char *head, const size_t pc) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "jnb ";
-  cout << data_str_wide(ti + len + head[1]);
+  cout << data_str_wide(pc + len + head[1]);
   return len;
 }
 

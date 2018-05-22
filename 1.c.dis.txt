@@ -6,7 +6,7 @@
 000c: 01c1          add cx, ax
 000e: 01c1          add cx, ax
 0010: bb1000        mov bx, 0010
-0013: 81fb1400      cmp bx, 0014
+0013: 81fb1400      cmp bx, 14
 0017: 730f          jnb 0028
 0019: f6c301        test bl, 1
 001c: 750a          jne 0028
@@ -48,7 +48,7 @@
 006b: 55            push bp
 006c: 89e5          mov bp, sp
 006e: e8e0ff        call 0051
-0071: 833e0e0000    cmp [000e], 00
+0071: 833e0e0000    cmp [000e], 0
 0076: 7406          je 007e
 0078: 8b1e0e00      mov bx, [000e]
 007c: ffd3          call bx
@@ -107,7 +107,7 @@
 00f6: 09ff          or di, di
 00f8: 7403          je 00fd
 00fa: 897c02        mov [si+2], di
-00fd: 837c0200      cmp [si+2], 00
+00fd: 837c0200      cmp [si+2], 0
 0101: 7d0e          jnl 0111
 0103: 8b5402        mov dx, [si+2]
 0106: f7da          neg dx
