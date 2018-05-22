@@ -31,7 +31,7 @@
 0044: b80100        mov ax, 0001
 0047: 50            push ax
 0048: e84100        call 008c
-004b: 83c406        add sp, 06
+004b: 83c406        add sp, 6
 004e: e9e400        jmp 0135
 0051: 55            push bp
 0052: 89e5          mov bp, sp
@@ -71,7 +71,7 @@
 00a4: 31c0          xor ax, ax
 00a6: 50            push ax
 00a7: e83300        call 00dd
-00aa: 83c406        add sp, 06
+00aa: 83c406        add sp, 6
 00ad: e98500        jmp 0135
 00b0: 55            push bp
 00b1: 89e5          mov bp, sp
@@ -89,7 +89,7 @@
 00d0: b80100        mov ax, 0001
 00d3: 50            push ax
 00d4: e80600        call 00dd
-00d7: 83c406        add sp, 06
+00d7: 83c406        add sp, 6
 00da: e95800        jmp 0135
 00dd: 55            push bp
 00de: 89e5          mov bp, sp

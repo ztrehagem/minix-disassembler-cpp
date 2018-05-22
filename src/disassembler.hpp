@@ -83,6 +83,7 @@ private:
   size_t proc_imm_to_rm(const char *head, const char *name, const bool s = false);
   size_t proc_imm_to_reg(const char *head, const char *name);
   size_t proc_imm_to_accum(const char *head, const char *name);
-  size_t proc_rm(const char *head, const char *name);
+  size_t proc_rm(const char *head, const char *name, const bool w = false);
   size_t proc_reg(const char *head, const char *name);
+  size_t proc_single(const char *head, const char *name);
 };

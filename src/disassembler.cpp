@@ -61,37 +61,39 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111110)
                  == 0b00010100) pc += proc_imm_to_accum(head, "adc");
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111111000000000) pc += proc_rm(head, "inc");
+                 == 0b1111111000000000) pc += proc_rm(head, "inc", true);
     else if ((top & 0b11111000)
                  == 0b01000000) pc += proc_reg(head, "inc");
     else if ((top & 0b11111100)
                  == 0b00101000) pc += proc_rm_and_reg_to_either(head, "sub");
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000101000) pc += sub_2(head);
+                 == 0b1000000000101000) pc += proc_imm_to_rm(head, "sub", true);
     else if ((top & 0b11111110)
-                 == 0b00101100) pc += sub_3(head);
+                 == 0b00101100) pc += proc_imm_to_accum(head, "sub");
     else if ((top & 0b11111100)
                  == 0b00011000) pc += proc_rm_and_reg_to_either(head, "ssb");
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000011000) pc += ssb_2(head);
+                 == 0b1000000000011000) pc += proc_imm_to_rm(head, "ssb", true);
     // else if ((top & 0b11111110)
     //              == 0b0001110) pc += ssb_3(head);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111111000001000) pc += dec_1(head);
+                 == 0b1111111000001000) pc += proc_rm(head, "dec", true);
     else if ((top & 0b11111000)
-                 == 0b01001000) pc += dec_2(head);
+                 == 0b01001000) pc += proc_reg(head, "dec");
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111011000011000) pc += neg_1(head);
+                 == 0b1111011000011000) pc += proc_rm(head, "neg", true);
     else if ((top & 0b11111100)
-                 == 0b00111000) pc += cmp_1(head);
+                 == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp");
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000111000) pc += cmp_2(head);
+                 == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", true);
+    else if ((top & 0b11111110)
+                 == 0b00111100) pc += proc_imm_to_accum(head, "cmp");
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111011000100000) pc += mul_1(head);
+                 == 0b1111011000100000) pc += proc_rm(head, "mul", true);
     else if ((top & 0b11111111)
-                 == 0b10011000) pc += cbw_1(head);
+                 == 0b10011000) pc += proc_single(head, "cbw");
     else if ((top & 0b11111111)
-                 == 0b10011001) pc += cwd_1(head);
+                 == 0b10011001) pc += proc_single(head, "cwd");
     else if ((dbl & 0b1111110000111000)
                  == 0b1101000000100000) pc += shl_1(head);
     else if ((top & 0b11111100)
@@ -188,156 +190,6 @@ size_t Disassembler::inst_lea(const char *head) {
   cout << inst.get_inst_str("lea");
   cout << inst.get_reg_name() << ", " << inst.get_rm_str();
 
-  return len;
-}
-
-size_t Disassembler::inc_1(const char *head) {
-  Inst inst(head);
-  inst.w = head[0];
-  inst.set_mod_sec();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("inc");
-  cout << inst.get_rm_str();
-
-  return len;
-}
-
-size_t Disassembler::inc_2(const char *head) {
-  Inst inst(head);
-  inst.reg = head[0];
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("inc");
-  cout << inst.get_reg_name();
-
-  return len;
-}
-
-size_t Disassembler::sub_2(const char *head) {
-  Inst inst(head);
-  inst.s = head[0] >> 1;
-  inst.w = head[0];
-  inst.set_mod_sec();
-  inst.set_data();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("sub");
-  cout << inst.get_rm_str() << ", " << inst.get_data_str(true);
-
-  return len;
-}
-
-size_t Disassembler::sub_3(const char *head) {
-  Inst inst(head);
-  inst.w = head[0];
-  inst.set_data();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("sub");
-  cout << inst.get_accumulator_str() << ", " << inst.get_data_str();
-
-  return len;
-}
-
-size_t Disassembler::ssb_2(const char *head) {
-  Inst inst(head);
-  inst.s = head[0] >> 1;
-  inst.w = head[0];
-  inst.set_mod_sec();
-  inst.set_data();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("ssb");
-  cout << inst.get_rm_str() << ", " << inst.get_data_str(true);
-
-  return len;
-}
-
-size_t Disassembler::dec_1(const char *head) {
-  Inst inst(head);
-  inst.w = head[0];
-  inst.set_mod_sec();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("dec");
-  cout << inst.get_rm_str();
-
-  return len;
-}
-
-size_t Disassembler::dec_2(const char *head) {
-  Inst inst(head);
-  inst.reg = head[0];
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("dec");
-  cout << inst.get_reg_name();
-
-  return len;
-}
-
-size_t Disassembler::neg_1(const char *head) {
-  Inst inst(head);
-  inst.w = head[0];
-  inst.set_mod_sec();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("neg");
-  cout << inst.get_rm_str();
-
-  return len;
-}
-
-size_t Disassembler::cmp_1(const char *head) {
-  Inst inst(head);
-  inst.d = head[0] >> 1;
-  inst.w = head[0];
-  inst.set_mod_sec();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("cmp");
-  cout << inst.get_dist_str();
-
-  return len;
-}
-
-size_t Disassembler::cmp_2(const char *head) {
-  // Immediate with Register Memory
-  Inst inst(head);
-  inst.s = head[0] >> 1;
-  inst.w = head[0];
-  inst.set_mod_sec();
-  inst.set_data();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("cmp");
-  cout << inst.get_rm_str() << ", " << inst.get_data_str(true);
-
-  return len;
-}
-
-size_t Disassembler::mul_1(const char *head) {
-  Inst inst(head);
-  inst.w = head[0];
-  inst.set_mod_sec();
-
-  const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str("mul");
-  cout << inst.get_rm_str();
-
-  return len;
-}
-
-size_t Disassembler::cbw_1(const char *head) {
-  const size_t len = 1;
-  cout << instruction_str(head, len) << "cbw";
-  return len;
-}
-
-size_t Disassembler::cwd_1(const char *head) {
-  const size_t len = 1;
-  cout << instruction_str(head, len) << "cwd";
   return len;
 }
 
@@ -651,7 +503,7 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
 
   const size_t len = inst.get_inst_len();
   cout << inst.get_inst_str(name);
-  cout << inst.get_rm_str() << ", " << inst.get_data_str();
+  cout << inst.get_rm_str() << ", " << inst.get_data_str(true);
 
   return len;
 }
@@ -681,8 +533,9 @@ size_t Disassembler::proc_imm_to_accum(const char *head, const char *name) {
   return len;
 }
 
-size_t Disassembler::proc_rm(const char *head, const char *name) {
+size_t Disassembler::proc_rm(const char *head, const char *name, const bool w) {
   Inst inst(head);
+  if (w) inst.w = head[0];
   inst.set_mod_sec();
 
   const size_t len = inst.get_inst_len();
@@ -700,6 +553,12 @@ size_t Disassembler::proc_reg(const char *head, const char *name) {
   cout << inst.get_inst_str(name);
   cout << inst.get_reg_name();
 
+  return len;
+}
+
+size_t Disassembler::proc_single(const char *head, const char *name) {
+  const size_t len = 1;
+  cout << instruction_str(head, len) << name;
   return len;
 }
 
