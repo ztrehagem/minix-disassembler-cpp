@@ -5,6 +5,7 @@
 using namespace std;
 
 struct Inst {
+  const char *head;
   unsigned s:1;
   unsigned v:1;
   unsigned w:1;
@@ -22,7 +23,7 @@ struct Inst {
   bool has_mod_sec;
   bool has_data_sec;
 
-  Inst() {
+  Inst(const char *head) : head(head) {
     s = 0;
     v = 0;
     w = 1;
@@ -37,12 +38,14 @@ struct Inst {
     has_data_sec = false;
   }
 
-  void set_mod_sec(const char *head);
-  void set_data(const char *head);
+  void set_mod_sec();
+  void set_data();
   bool is_wide_data();
   size_t get_inst_len();
+  string get_inst_str(const char *op);
   string get_reg_name(const bool is_rm = false);
   string get_rm_str();
   string get_data_str(const bool as_natural = false);
   string get_dist_str();
+  string get_accumulator_str();
 };

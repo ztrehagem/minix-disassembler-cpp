@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void Inst::set_mod_sec(const char *head) {
+void Inst::set_mod_sec() {
   has_mod_sec = true;
   mod = head[1] >> 6;
   reg = head[1] >> 3;
@@ -19,7 +19,7 @@ void Inst::set_mod_sec(const char *head) {
   }
 }
 
-void Inst::set_data(const char *head) {
+void Inst::set_data() {
   const size_t offset = 1 + has_mod_sec + disp_size;
   has_data_sec = true;
   if (is_wide_data()) {
@@ -37,6 +37,10 @@ bool Inst::is_wide_data() {
 
 size_t Inst::get_inst_len() {
   return 1 + has_mod_sec + disp_size + data_size;
+}
+
+string Inst::get_inst_str(const char *op) {
+  return Disassembler::instruction_str(head, get_inst_len()) + op + ' ';
 }
 
 string Inst::get_reg_name(const bool is_rm) {
@@ -100,4 +104,8 @@ string Inst::get_dist_str() {
     oss << get_rm_str() << ", " << get_reg_name();
   }
   return oss.str();
+}
+
+string Inst::get_accumulator_str() {
+  return w ? "ax" : "al";
 }
