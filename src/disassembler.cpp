@@ -29,7 +29,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     const unsigned short dbl = (head[0] << 8 & 0xff00) + (head[1] & 0xff);
 
     if      ((top & 0b11111100)
-                 == 0b10001000) pc += proc_rm_and_reg_to_either(head, "mov");
+                 == 0b10001000) pc += proc_rm_and_reg_to_either(head, "mov", true);
     else if ((dbl & 0b1111111000111000)
                  == 0b1100011000000000) pc += proc_imm_to_rm(head, "mov");
     else if ((top & 0b11110000)
@@ -43,19 +43,23 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111000)
                  == 0b01011000) pc += proc_reg(head, "pop");
     else if ((top & 0b11111110)
+                 == 0b10000110) pc += proc_rm_and_reg_to_either(head, "xchg");
+    else if ((top & 0b11111000)
+                 == 0b10010000) pc += proc_reg_with_accum(head, "xchg");
+    else if ((top & 0b11111110)
                  == 0b11100100) pc += inst_in_1(head);
     else if ((top & 0b11111110)
                  == 0b11101100) pc += inst_in_2(head);
     else if ((top & 0b11111111)
                  == 0b10001101) pc += inst_lea(head);
     else if ((top & 0b11111100)
-                 == 0b00000000) pc += proc_rm_and_reg_to_either(head, "add");
+                 == 0b00000000) pc += proc_rm_and_reg_to_either(head, "add", true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1000000000000000) pc += proc_imm_to_rm(head, "add", true);
     else if ((top & 0b11111110)
                  == 0b00000100) pc += proc_imm_to_accum(head, "add");
     else if ((top & 0b11111100)
-                 == 0b00010000) pc += proc_rm_and_reg_to_either(head, "adc");
+                 == 0b00010000) pc += proc_rm_and_reg_to_either(head, "adc", true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1000000000010000) pc += proc_imm_to_rm(head, "adc", true);
     else if ((top & 0b11111110)
@@ -65,13 +69,13 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111000)
                  == 0b01000000) pc += proc_reg(head, "inc");
     else if ((top & 0b11111100)
-                 == 0b00101000) pc += proc_rm_and_reg_to_either(head, "sub");
+                 == 0b00101000) pc += proc_rm_and_reg_to_either(head, "sub", true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1000000000101000) pc += proc_imm_to_rm(head, "sub", true);
     else if ((top & 0b11111110)
                  == 0b00101100) pc += proc_imm_to_accum(head, "sub");
     else if ((top & 0b11111100)
-                 == 0b00011000) pc += proc_rm_and_reg_to_either(head, "ssb");
+                 == 0b00011000) pc += proc_rm_and_reg_to_either(head, "ssb", true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1000000000011000) pc += proc_imm_to_rm(head, "ssb", true);
     // else if ((top & 0b11111110)
@@ -83,43 +87,78 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((dbl & 0b1111111000111000)
                  == 0b1111011000011000) pc += proc_rm(head, "neg", true);
     else if ((top & 0b11111100)
-                 == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp");
+                 == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp", true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", true);
     else if ((top & 0b11111110)
                  == 0b00111100) pc += proc_imm_to_accum(head, "cmp");
     else if ((dbl & 0b1111111000111000)
                  == 0b1111011000100000) pc += proc_rm(head, "mul", true);
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111011000110000) pc += proc_rm(head, "div", true);
     else if ((top & 0b11111111)
                  == 0b10011000) pc += proc_single(head, "cbw");
     else if ((top & 0b11111111)
                  == 0b10011001) pc += proc_single(head, "cwd");
+    // LOGIC
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111001000010000) pc += proc_logic(head, "not");
     else if ((dbl & 0b1111110000111000)
                  == 0b1101000000100000) pc += proc_logic(head, "shl", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000101000) pc += proc_logic(head, "shr", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000111000) pc += proc_logic(head, "sar", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000000000) pc += proc_logic(head, "rol", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000001000) pc += proc_logic(head, "ror", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000010000) pc += proc_logic(head, "rcl", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000011000) pc += proc_logic(head, "rcr", true);
+    // AND
     else if ((top & 0b11111100)
-                 == 0b00100000) pc += proc_rm_and_reg_to_either(head, "and");
+                 == 0b00100000) pc += proc_rm_and_reg_to_either(head, "and", true);
     else if ((dbl & 0b1111111000111000)
                  == 0b1000000000100000) pc += proc_imm_to_rm(head, "and");
     else if ((top & 0b11111110)
                  == 0b00100100) pc += proc_imm_to_accum(head, "and");
+    // TEST
     else if ((top & 0b11111110)
                  == 0b10000100) pc += proc_rm_and_reg_to_either(head, "test");
     else if ((dbl & 0b1111111000111000)
                  == 0b1111011000000000) pc += proc_imm_to_rm(head, "test");
     else if ((top & 0b11111110)
                  == 0b10101000) pc += proc_imm_to_accum(head, "test");
+    // OR
     else if ((top & 0b11111100)
-                 == 0b00001000) pc += proc_rm_and_reg_to_either(head, "or");
+                 == 0b00001000) pc += proc_rm_and_reg_to_either(head, "or", true);
     else if ((dbl & 0b1111111000111000)
                  == 0b1000000000001000) pc += proc_imm_to_rm(head, "or");
     else if ((top & 0b11111110)
                  == 0b00001100) pc += proc_imm_to_accum(head, "or");
+    // XOR
     else if ((top & 0b11111100)
-                 == 0b00110000) pc += proc_rm_and_reg_to_either(head, "xor");
+                 == 0b00110000) pc += proc_rm_and_reg_to_either(head, "xor", true);
     else if ((dbl & 0b1111111000111000)
                  == 0b1000000000110000) pc += proc_imm_to_rm(head, "xor");
     else if ((top & 0b11111110)
                  == 0b00110100) pc += proc_imm_to_accum(head, "xor");
+    // STRING MANIPULATION
+    else if ((top & 0b11111110)
+                 == 0b11110010) pc += inst_rep(head);
+    // else if ((top & 0b11111110)
+    //              == 0b10100100) pc += proc_single(head, "movs");
+    // else if ((top & 0b11111110)
+    //              == 0b10100110) pc += proc_single(head, "cmps");
+    // else if ((top & 0b11111110)
+    //              == 0b10101110) pc += proc_single(head, "scas");
+    // else if ((top & 0b11111110)
+    //              == 0b10101100) pc += proc_single(head, "lods");
+    // else if ((top & 0b11111110)
+    //              == 0b10101010) pc += proc_single(head, "stos");
+    // CONTROL TRANSFER
     else if ((top & 0b11111111)
                  == 0b11101000) pc += proc_jmp_direct_within_segment(head, "call", pc);
     else if ((dbl & 0b1111111100111000)
@@ -128,8 +167,12 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b11101001) pc += proc_jmp_direct_within_segment(head, "jmp", pc);
     else if ((top & 0b11111111)
                  == 0b11101011) pc += proc_jmp_direct_within_segment(head, "jmp", pc, true);
+    else if ((dbl & 0b1111111100111000)
+                 == 0b1111111100100000) pc += proc_jmp_indirect_within_segment(head, "jmp");
     else if ((top & 0b11111111)
                  == 0b11000011) pc += proc_single(head, "ret");
+    else if ((top & 0b11111111)
+                 == 0b11000010) pc += proc_disp(head, "ret");
     else if ((top & 0b11111111)
                  == 0b01110100) pc += proc_branch(head, "je", pc);
     else if ((top & 0b11111111)
@@ -162,11 +205,38 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
                  == 0b01110001) pc += proc_branch(head, "jno", pc);
     else if ((top & 0b11111111)
                  == 0b01111001) pc += proc_branch(head, "jns", pc);
+    else if ((top & 0b11111111)
+                 == 0b11100010) pc += proc_branch(head, "loop", pc);
+    else if ((top & 0b11111111)
+                 == 0b11100001) pc += proc_branch(head, "loopz", pc);
+    else if ((top & 0b11111111)
+                 == 0b11100000) pc += proc_branch(head, "loopnz", pc);
 
     else if ((top & 0b11111111)
                  == 0b11001101) pc += inst_int_1(head);
+
     else if ((top & 0b11111111)
-                 == 0b11110100) pc += inst_hlt_1(head);
+                 == 0b11111000) pc += proc_single(head, "clc");
+    else if ((top & 0b11111111)
+                 == 0b11110101) pc += proc_single(head, "cmc");
+    else if ((top & 0b11111111)
+                 == 0b11111001) pc += proc_single(head, "stc");
+    else if ((top & 0b11111111)
+                 == 0b11111100) pc += proc_single(head, "cld");
+    else if ((top & 0b11111111)
+                 == 0b11111101) pc += proc_single(head, "std");
+    else if ((top & 0b11111111)
+                 == 0b11111010) pc += proc_single(head, "cli");
+    else if ((top & 0b11111111)
+                 == 0b11111011) pc += proc_single(head, "sti");
+    else if ((top & 0b11111111)
+                 == 0b11110100) pc += proc_single(head, "hlt");
+    else if ((top & 0b11111111)
+                 == 0b10011011) pc += proc_single(head, "wait");
+    else if ((top & 0b11111000)
+                 == 0b11011000) pc += proc_rm(head, "esc");
+    else if ((top & 0b11111111)
+                 == 0b10011011) pc += proc_single(head, "lock");
     else {
       cout << instruction_str(head, 1) << "************";
       pc++;
@@ -211,17 +281,17 @@ size_t Disassembler::inst_int_1(const char *head) {
   return len;
 }
 
-size_t Disassembler::inst_hlt_1(const char *head) {
-  const size_t len = 1;
-  cout << instruction_str(head, len) << "hlt";
+size_t Disassembler::inst_rep(const char *head) {
+  const size_t len = 2;
+  cout << instruction_str(head, len) << "rep ??"; // FIXME
   return len;
 }
 
 // templates
 
-size_t Disassembler::proc_rm_and_reg_to_either(const char *head, const char *name) {
+size_t Disassembler::proc_rm_and_reg_to_either(const char *head, const char *name, const bool d) {
   Inst inst(head);
-  inst.d = head[0] >> 1;
+  if (d) inst.d = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec();
 
@@ -294,6 +364,17 @@ size_t Disassembler::proc_reg(const char *head, const char *name) {
   return len;
 }
 
+size_t Disassembler::proc_reg_with_accum(const char *head, const char *name) {
+  Inst inst(head);
+  inst.reg = head[0];
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_reg_name() << ", " << inst.get_accumulator_str();
+
+  return len;
+}
+
 size_t Disassembler::proc_logic(const char *head, const char *name, const bool v) {
   Inst inst(head);
   if (v) inst.v = head[0] >> 1;
@@ -344,6 +425,19 @@ size_t Disassembler::proc_branch(const char *head, const char *name, const size_
 size_t Disassembler::proc_single(const char *head, const char *name) {
   const size_t len = 1;
   cout << instruction_str(head, len) << name;
+  return len;
+}
+
+size_t Disassembler::proc_disp(const char *head, const char *name, const bool narrow) {
+  short disp;
+  if (narrow) {
+    disp = static_cast<signed char>(get_data_narrow(&head[1]));
+  } else {
+    disp = static_cast<signed short>(get_data_wide(&head[1]));
+  }
+  const size_t len = narrow ? 2 : 3;
+  cout << instruction_str(head, len) << name << " ";
+  cout << data_str_wide(disp);
   return len;
 }
 
