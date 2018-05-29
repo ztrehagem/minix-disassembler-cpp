@@ -310,8 +310,10 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
   inst.set_data();
 
   const size_t len = inst.get_inst_len();
-  cout << inst.get_inst_str(name);
-  cout << inst.get_rm_str() << ", " << inst.get_data_str(true);
+  string fixed_name(name);
+  // fixed_name += inst.is_wide_data() ? "" : " byte";
+  cout << inst.get_inst_str(fixed_name.c_str());
+  cout << inst.get_rm_str() << ", " << inst.get_data_str();
 
   return len;
 }
@@ -459,12 +461,12 @@ size_t Disassembler::get_extended_len(const Inst &inst) {
   }
 }
 
-string Disassembler::data_str_wide(const unsigned short data, const bool as_natural) {
-  return hex_str(as_natural ? static_cast<short>(data & 0xffff) : (data & 0xffff), as_natural ? 0 : 4);
+string Disassembler::data_str_wide(const unsigned short data, const bool sign) {
+  return hex_str(sign ? static_cast<short>(data & 0xffff) : (data & 0xffff), sign ? 0 : 4);
 }
 
-string Disassembler::data_str_narrow(const unsigned char data, const bool as_natural) {
-  return hex_str(as_natural ? static_cast<char>(data & 0xff) : (data & 0xff), as_natural ? 0 : 2);
+string Disassembler::data_str_narrow(const unsigned char data, const bool sign) {
+  return hex_str(sign ? static_cast<char>(data & 0xff) : (data & 0xff), sign ? 0 : 2);
 }
 
 string Disassembler::line_number_str(const size_t n) {

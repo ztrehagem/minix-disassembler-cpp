@@ -88,11 +88,11 @@ string Inst::get_rm_str() {
   return "[" + oss.str() + "]";
 }
 
-string Inst::get_data_str(const bool as_natural) {
+string Inst::get_data_str() {
   if (is_wide_data()) {
-    return Disassembler::data_str_wide(data.wide, as_natural);
+    return Disassembler::data_str_wide(data.wide, false);
   } else {
-    return Disassembler::data_str_narrow(data.narrow, as_natural);
+    return Disassembler::data_str_narrow(data.narrow, true);
   }
 }
 

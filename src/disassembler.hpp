@@ -15,8 +15,8 @@ public:
   static unsigned short get_data_wide(const char *head);
   static unsigned char get_data_narrow(const char *head);
   static size_t get_extended_len(const Inst &);
-  static string data_str_wide(const unsigned short data, const bool as_natural = false);
-  static string data_str_narrow(const unsigned char data, const bool as_natural = false);
+  static string data_str_wide(const unsigned short data, const bool sign = false);
+  static string data_str_narrow(const unsigned char data, const bool sign = false);
   static string line_number_str(const size_t);
   static string instruction_str(const char *head, const size_t len);
   static string hex_str(int value, size_t w = 0);
