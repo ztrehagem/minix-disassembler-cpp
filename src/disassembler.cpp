@@ -166,7 +166,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111111)
                  == 0b11101001) pc += proc_jmp_direct_within_segment(head, "jmp", pc);
     else if ((top & 0b11111111)
-                 == 0b11101011) pc += proc_jmp_direct_within_segment(head, "jmp", pc, true);
+                 == 0b11101011) pc += proc_jmp_direct_within_segment(head, "jmp short", pc, true);
     else if ((dbl & 0b1111111100111000)
                  == 0b1111111100100000) pc += proc_jmp_indirect_within_segment(head, "jmp");
     else if ((top & 0b11111111)
@@ -398,7 +398,6 @@ size_t Disassembler::proc_jmp_direct_within_segment(const char *head, const char
   }
   const size_t len = narrow ? 2 : 3;
   cout << instruction_str(head, len) << name << " ";
-  if (narrow) cout << "short ";
   cout << data_str_wide(pc + len + disp);
   return len;
 }
@@ -461,11 +460,11 @@ size_t Disassembler::get_extended_len(const Inst &inst) {
 }
 
 string Disassembler::data_str_wide(const unsigned short data, const bool as_natural) {
-  return hex_str(data & 0xffff, as_natural ? 0 : 4);
+  return hex_str(as_natural ? static_cast<short>(data & 0xffff) : (data & 0xffff), as_natural ? 0 : 4);
 }
 
 string Disassembler::data_str_narrow(const unsigned char data, const bool as_natural) {
-  return hex_str(data & 0xff, as_natural ? 0 : 2);
+  return hex_str(as_natural ? static_cast<char>(data & 0xff) : (data & 0xff), as_natural ? 0 : 2);
 }
 
 string Disassembler::line_number_str(const size_t n) {
@@ -480,8 +479,12 @@ string Disassembler::instruction_str(const char *head, const size_t len) {
   return ss.str();
 }
 
-string Disassembler::hex_str(const unsigned int value, const size_t w) {
+string Disassembler::hex_str(int value, size_t w) {
   ostringstream ss;
+  if (value < 0) {
+    ss << '-';
+    value = -value;
+  }
   if (w > 0) {
     ss << setfill('0') << setw(w) << hex << value;
   } else {

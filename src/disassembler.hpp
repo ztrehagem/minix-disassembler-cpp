@@ -19,7 +19,7 @@ public:
   static string data_str_narrow(const unsigned char data, const bool as_natural = false);
   static string line_number_str(const size_t);
   static string instruction_str(const char *head, const size_t len);
-  static string hex_str(const unsigned int value, const size_t w = 0);
+  static string hex_str(int value, size_t w = 0);
 
 private:
   ifstream& ifs;
