@@ -311,7 +311,7 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
 
   const size_t len = inst.get_inst_len();
   string fixed_name(name);
-  // fixed_name += inst.is_wide_data() ? "" : " byte";
+  fixed_name += inst.w ? "" : " byte";
   cout << inst.get_inst_str(fixed_name.c_str());
   cout << inst.get_rm_str() << ", " << inst.get_data_str();
 

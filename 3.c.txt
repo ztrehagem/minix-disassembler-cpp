@@ -8,7 +8,7 @@
 0010: bb1000        mov bx, 0010
 0013: 81fb1402      cmp bx, 0214
 0017: 730f          jnb 0028
-0019: f6c301        test bl, 1
+0019: f6c301        test byte bl, 1
 001c: 750a          jne 0028
 001e: 813f5353      cmp [bx], 5353
 0022: 7504          jne 0028
@@ -87,7 +87,7 @@
 00c5: 56            push si
 00c6: 57            push di
 00c7: 8b7604        mov si, [bp+4]
-00ca: 803c2a        cmp [si], 2a
+00ca: 803c2a        cmp byte [si], 2a
 00cd: 751b          jne 00ea
 00cf: 8b5e08        mov bx, [bp+8]
 00d2: 8b17          mov dx, [bx]
@@ -183,30 +183,30 @@
 01b4: 7438          je 01ee
 01b6: 837efe00      cmp [bp-2], 0
 01ba: 7d10          jnl 01cc
-01bc: c6042d        mov [si], 2d
+01bc: c6042d        mov byte [si], 2d
 01bf: 46            inc si
 01c0: f75efe        neg [bp-2]
 01c3: f75efc        neg [bp-4]
 01c6: 835efe00      ssb [bp-2], 0
 01ca: eb16          jmp short 01e2
-01cc: f6460602      test [bp+6], 2
+01cc: f6460602      test byte [bp+6], 2
 01d0: 7406          je 01d8
-01d2: c6042b        mov [si], 2b
+01d2: c6042b        mov byte [si], 2b
 01d5: 46            inc si
 01d6: eb0a          jmp short 01e2
-01d8: f6460604      test [bp+6], 4
+01d8: f6460604      test byte [bp+6], 4
 01dc: 7404          je 01e2
-01de: c60420        mov [si], 20
+01de: c60420        mov byte [si], 20
 01e1: 46            inc si
 01e2: 8b56fc        mov dx, [bp-4]
 01e5: 8b4efe        mov cx, [bp-2]
 01e8: 8956f8        mov [bp-8], dx
 01eb: 894efa        mov [bp-6], cx
-01ee: f6460608      test [bp+6], 8
+01ee: f6460608      test byte [bp+6], 8
 01f2: 740a          je 01fe
-01f4: 807e0a6f      cmp [bp+a], 6f
+01f4: 807e0a6f      cmp byte [bp+a], 6f
 01f8: 7504          jne 01fe
-01fa: c60430        mov [si], 30
+01fa: c60430        mov byte [si], 30
 01fd: 46            inc si
 01fe: 8b56fa        mov dx, [bp-6]
 0201: 0b56f8        or dx, [bp-8]
@@ -215,17 +215,17 @@
 020a: 7550          jne 025c
 020c: 89f0          mov ax, si
 020e: e98c00        jmp 029d
-0211: f6460608      test [bp+6], 8
+0211: f6460608      test byte [bp+6], 8
 0215: 740c          je 0223
-0217: 807e0a78      cmp [bp+a], 78
+0217: 807e0a78      cmp byte [bp+a], 78
 021b: 740c          je 0229
-021d: 807e0a58      cmp [bp+a], 58
+021d: 807e0a58      cmp byte [bp+a], 58
 0221: 7406          je 0229
-0223: 807e0a70      cmp [bp+a], 70
+0223: 807e0a70      cmp byte [bp+a], 70
 0227: 7533          jne 025c
-0229: c60430        mov [si], 30
+0229: c60430        mov byte [si], 30
 022c: 46            inc si
-022d: 807e0a58      cmp [bp+a], 58
+022d: 807e0a58      cmp byte [bp+a], 58
 0231: 7505          jne 0238
 0233: b85800        mov ax, 0058
 0236: eb03          jmp short 023b
@@ -253,7 +253,7 @@
 0273: e8e707        call 0a5d
 0276: 83c40a        add sp, a
 0279: 89c6          mov si, ax
-027b: 807e0a58      cmp [bp+a], 58
+027b: 807e0a58      cmp byte [bp+a], 58
 027f: 751a          jne 029b
 0281: 3976f6        cmp [bp-a], si
 0284: 7415          je 029b
@@ -351,7 +351,7 @@
 0364: 7404          je 036a
 0366: 81cf0001      or di, 0100
 036a: 8b5e04        mov bx, [bp+4]
-036d: 803f2e        cmp [bx], 2e
+036d: 803f2e        cmp byte [bx], 2e
 0370: 7527          jne 0399
 0372: ff4604        inc [bp+4]
 0375: 8b5604        mov dx, [bp+4]
@@ -472,7 +472,7 @@
 04b6: 7403          je 04bb
 04b8: e90f01        jmp 05ca
 04bb: 8b5efe        mov bx, [bp-2]
-04be: 803f00        cmp [bx], 0
+04be: 803f00        cmp byte [bx], 0
 04c1: 7503          jne 04c6
 04c3: e90401        jmp 05ca
 04c6: ff46fe        inc [bp-2]
@@ -591,11 +591,11 @@
 0606: f7c70004      test di, 0400
 060a: 7415          je 0621
 060c: 8b5ee8        mov bx, [bp-18]
-060f: 803f2b        cmp [bx], 2b
+060f: 803f2b        cmp byte [bx], 2b
 0612: 740a          je 061e
-0614: 803f2d        cmp [bx], 2d
+0614: 803f2d        cmp byte [bx], 2d
 0617: 7405          je 061e
-0619: 803f20        cmp [bx], 20
+0619: 803f20        cmp byte [bx], 20
 061c: 7503          jne 0621
 061e: ff46ee        inc [bp-12]
 0621: 8b56f6        mov dx, [bp-a]
@@ -853,19 +853,19 @@
 0854: 89f8          mov ax, di
 0856: 30e4          xor ah, ah
 0858: e9ff01        jmp 0a5a
-085b: f6440402      test [si+4], 2
+085b: f6440402      test byte [si+4], 2
 085f: 7506          jne 0867
 0861: b8ffff        mov ax, ffff
 0864: e9f301        jmp 0a5a
-0867: f6440480      test [si+4], -80
+0867: f6440480      test byte [si+4], -80
 086b: 740c          je 0879
-086d: f6440410      test [si+4], 10
+086d: f6440410      test byte [si+4], 10
 0871: 7506          jne 0879
 0873: b8ffff        mov ax, ffff
 0876: e9e101        jmp 0a5a
 0879: 8164047fff    and [si+4], ff7f
 087e: 814c040001    or [si+4], 0100
-0883: f6440404      test [si+4], 4
+0883: f6440404      test byte [si+4], 4
 0887: 7403          je 088c
 0889: e97700        jmp 0903
 088c: 837c0800      cmp [si+8], 0
@@ -902,14 +902,14 @@
 08e1: eb1a          jmp short 08fd
 08e3: 814c040800    or [si+4], 0008
 08e8: c744060004    mov [si+6], 0400
-08ed: f6440440      test [si+4], 40
+08ed: f6440440      test byte [si+4], 40
 08f1: 7506          jne 08f9
 08f3: c704ff03      mov [si], 03ff
 08f7: eb04          jmp short 08fd
 08f9: c704ffff      mov [si], ffff
 08fd: 8b5408        mov dx, [si+8]
 0900: 89540a        mov [si+a], dx
-0903: f6440404      test [si+4], 4
+0903: f6440404      test byte [si+4], 4
 0907: 745b          je 0964
 0909: 89fa          mov dx, di
 090b: 8856ff        mov [bp-1], dl
@@ -945,7 +945,7 @@
 095d: 89f8          mov ax, di
 095f: 30e4          xor ah, ah
 0961: e9f600        jmp 0a5a
-0964: f6440440      test [si+4], 40
+0964: f6440440      test byte [si+4], 40
 0968: 7503          jne 096d
 096a: e97700        jmp 09e4
 096d: 89fa          mov dx, di
@@ -1548,18 +1548,18 @@
 0f3a: e9f700        jmp 1034
 0f3d: 837c0800      cmp [si+8], 0
 0f41: 740d          je 0f50
-0f43: f6440480      test [si+4], -80
+0f43: f6440480      test byte [si+4], -80
 0f47: 750c          jne 0f55
 0f49: f744040001    test [si+4], 0100
 0f4e: 7505          jne 0f55
 0f50: 31c0          xor ax, ax
 0f52: e9df00        jmp 1034
-0f55: f6440480      test [si+4], -80
+0f55: f6440480      test byte [si+4], -80
 0f59: 7457          je 0fb2
 0f5b: c746f60000    mov [bp-a], 0000
 0f60: 837c0800      cmp [si+8], 0
 0f64: 740d          je 0f73
-0f66: f6440404      test [si+4], 4
+0f66: f6440404      test byte [si+4], 4
 0f6a: 7507          jne 0f73
 0f6c: 8b14          mov dx, [si]
 0f6e: f7da          neg dx
@@ -1580,18 +1580,18 @@
 0f91: 814c042000    or [si+4], 0020
 0f96: b8ffff        mov ax, ffff
 0f99: e99800        jmp 1034
-0f9c: f6440402      test [si+4], 2
+0f9c: f6440402      test byte [si+4], 2
 0fa0: 7405          je 0fa7
 0fa2: 8164047ffe    and [si+4], fe7f
 0fa7: 8b5408        mov dx, [si+8]
 0faa: 89540a        mov [si+a], dx
 0fad: 31c0          xor ax, ax
 0faf: e98200        jmp 1034
-0fb2: f6440404      test [si+4], 4
+0fb2: f6440404      test byte [si+4], 4
 0fb6: 7405          je 0fbd
 0fb8: 31c0          xor ax, ax
 0fba: e97700        jmp 1034
-0fbd: f6440401      test [si+4], 1
+0fbd: f6440401      test byte [si+4], 1
 0fc1: 7405          je 0fc8
 0fc3: 816404fffe    and [si+4], feff
 0fc8: 8b540a        mov dx, [si+a]
