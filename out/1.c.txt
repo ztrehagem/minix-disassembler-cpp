@@ -6,7 +6,7 @@
 000c: 01c1          add cx, ax
 000e: 01c1          add cx, ax
 0010: bb1000        mov bx, 0010
-0013: 81fb1400      cmp bx, 14
+0013: 81fb1400      cmp bx, 0014
 0017: 730f          jnb 0028
 0019: f6c301        test bl, 1
 001c: 750a          jne 0028
@@ -60,8 +60,8 @@
 008b: 00e9          add cl, ch
 008d: 2100          and [bx+si], ax
 008f: 005589        add [di-77], dl
-0092: e583          in ??, ??
-0094: ec            in ??, ??
+0092: e583          in ax, 83
+0094: ec            in al, dx
 0095: 188b5604      ssb [bp+di+456], cl
 0099: 8956ec        mov [bp-14], dx
 009c: 8d46e8        lea ax, [bp-18]

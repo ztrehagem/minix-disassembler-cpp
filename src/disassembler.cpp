@@ -400,7 +400,7 @@ size_t Disassembler::proc_logic(const char *head, const char *name, const bool v
   const size_t len = inst.get_inst_len();
   cout << inst.get_inst_str(name);
   cout << inst.get_rm_str();
-  if (v) cout << ", " << (inst.v ? "[cl]" : "1");
+  if (v) cout << ", " << (inst.v ? (inst.mod == 0b11 ? "cl" : "[cl]") : "1");
 
   return len;
 }
