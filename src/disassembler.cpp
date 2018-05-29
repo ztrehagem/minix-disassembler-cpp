@@ -251,17 +251,24 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
 }
 
 size_t Disassembler::inst_in_1(const char *head) {
+  Inst inst(head);
+  inst.w = head[0];
+
   const size_t len = 2;
   cout << instruction_str(head, len);
-  cout << "in ??, ??"; // FIXME
+  cout << "in " << (inst.w ? "ax" : "al");
+  cout << ", " << Disassembler::data_str_narrow(head[1]);
 
   return len;
 }
 
 size_t Disassembler::inst_in_2(const char *head) {
+  Inst inst(head);
+  inst.w = head[0];
+
   const size_t len = 1;
   cout << instruction_str(head, len);
-  cout << "in ??, ??"; // FIXME
+  cout << "in " << (inst.w ? "ax" : "al") << ", dx";
 
   return len;
 }
@@ -286,8 +293,11 @@ size_t Disassembler::inst_int_1(const char *head) {
 }
 
 size_t Disassembler::inst_rep(const char *head) {
+  const unsigned char z = 0b1 & head[0];
+  const unsigned char ex = 0xff & head[1];
   const size_t len = 2;
-  cout << instruction_str(head, len) << "rep ??"; // FIXME
+  cout << instruction_str(head, len);
+  cout << "rep " << (ex == 0xa5 ? "movsw" : "movsb");
   return len;
 }
 
@@ -315,7 +325,7 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
 
   const size_t len = inst.get_inst_len();
   string fixed_name(name);
-  fixed_name += inst.w ? "" : " byte";
+  fixed_name += (!inst.w && inst.mod != 0b11) ? " byte" : "";
   cout << inst.get_inst_str(fixed_name.c_str());
   cout << inst.get_rm_str() << ", " << inst.get_data_str(sign);
 

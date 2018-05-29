@@ -8,7 +8,7 @@
 0010: bb1000        mov bx, 0010
 0013: 81fb1402      cmp bx, 0214
 0017: 730f          jnb 0028
-0019: f6c301        test byte bl, 1
+0019: f6c301        test bl, 1
 001c: 750a          jne 0028
 001e: 813f5353      cmp [bx], 5353
 0022: 7504          jne 0028
@@ -67,8 +67,8 @@
 0099: e90111        jmp 119d
 009c: e90100        jmp 00a0
 009f: 005589        add [di-77], dl
-00a2: e583          in ??, ??
-00a4: ec            in ??, ??
+00a2: e583          in ax, 83
+00a4: ec            in al, dx
 00a5: 188b5604      ssb [bp+di+456], cl
 00a9: 8956ec        mov [bp-14], dx
 00ac: 8d46e8        lea ax, [bp-18]
@@ -1727,9 +1727,9 @@
 1105: a801          test al, 1
 1107: 7506          jne 110f
 1109: d1e9          shr cx, 1
-110b: f2a5          rep ??
+110b: f2a5          rep movsw
 110d: 11c9          adc cx, cx
-110f: f2a4          rep ??
+110f: f2a4          rep movsb
 1111: 8b4604        mov ax, [bp+4]
 1114: 5f            pop di
 1115: 5e            pop si
@@ -1740,7 +1740,7 @@
 111b: 4e            dec si
 111c: 01cf          add di, cx
 111e: 4f            dec di
-111f: f2a4          rep ??
+111f: f2a4          rep movsb
 1121: fc            cld
 1122: ebed          jmp short 1111
 1124: 8b17          mov dx, [bx]
