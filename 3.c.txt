@@ -857,7 +857,7 @@
 085f: 7506          jne 0867
 0861: b8ffff        mov ax, ffff
 0864: e9f301        jmp 0a5a
-0867: f6440480      test byte [si+4], -80
+0867: f6440480      test byte [si+4], 80
 086b: 740c          je 0879
 086d: f6440410      test byte [si+4], 10
 0871: 7506          jne 0879
@@ -1548,13 +1548,13 @@
 0f3a: e9f700        jmp 1034
 0f3d: 837c0800      cmp [si+8], 0
 0f41: 740d          je 0f50
-0f43: f6440480      test byte [si+4], -80
+0f43: f6440480      test byte [si+4], 80
 0f47: 750c          jne 0f55
 0f49: f744040001    test [si+4], 0100
 0f4e: 7505          jne 0f55
 0f50: 31c0          xor ax, ax
 0f52: e9df00        jmp 1034
-0f55: f6440480      test byte [si+4], -80
+0f55: f6440480      test byte [si+4], 80
 0f59: 7457          je 0fb2
 0f5b: c746f60000    mov [bp-a], 0000
 0f60: 837c0800      cmp [si+8], 0

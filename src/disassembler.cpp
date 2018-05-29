@@ -4,8 +4,12 @@
 #include <sstream>
 #include "disassembler.hpp"
 #include "inst.hpp"
+#include "consts.hpp"
 
 using namespace std;
+
+#define SIGNED true
+#define UNSIGNED false
 
 void Disassembler::disassemble() {
   ifs.read(reinterpret_cast<char *>(&header), sizeof(header));
@@ -31,7 +35,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     if      ((top & 0b11111100)
                  == 0b10001000) pc += proc_rm_and_reg_to_either(head, "mov", true);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1100011000000000) pc += proc_imm_to_rm(head, "mov");
+                 == 0b1100011000000000) pc += proc_imm_to_rm(head, "mov", SIGNED);
     else if ((top & 0b11110000)
                  == 0b10110000) pc += proc_imm_to_reg(head, "mov");
     else if ((dbl & 0b1111111100111000)
@@ -55,13 +59,13 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111100)
                  == 0b00000000) pc += proc_rm_and_reg_to_either(head, "add", true);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000000000) pc += proc_imm_to_rm(head, "add", true);
+                 == 0b1000000000000000) pc += proc_imm_to_rm(head, "add", SIGNED, true);
     else if ((top & 0b11111110)
                  == 0b00000100) pc += proc_imm_to_accum(head, "add");
     else if ((top & 0b11111100)
                  == 0b00010000) pc += proc_rm_and_reg_to_either(head, "adc", true);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000010000) pc += proc_imm_to_rm(head, "adc", true);
+                 == 0b1000000000010000) pc += proc_imm_to_rm(head, "adc", SIGNED, true);
     else if ((top & 0b11111110)
                  == 0b00010100) pc += proc_imm_to_accum(head, "adc");
     else if ((dbl & 0b1111111000111000)
@@ -71,13 +75,13 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111100)
                  == 0b00101000) pc += proc_rm_and_reg_to_either(head, "sub", true);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000101000) pc += proc_imm_to_rm(head, "sub", true);
+                 == 0b1000000000101000) pc += proc_imm_to_rm(head, "sub", SIGNED, true);
     else if ((top & 0b11111110)
                  == 0b00101100) pc += proc_imm_to_accum(head, "sub");
     else if ((top & 0b11111100)
                  == 0b00011000) pc += proc_rm_and_reg_to_either(head, "ssb", true);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000011000) pc += proc_imm_to_rm(head, "ssb", true);
+                 == 0b1000000000011000) pc += proc_imm_to_rm(head, "ssb", SIGNED, true);
     // else if ((top & 0b11111110)
     //              == 0b0001110) pc += ssb_3(head);
     else if ((dbl & 0b1111111000111000)
@@ -89,7 +93,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111100)
                  == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp", true);
     else if ((dbl & 0b1111110000111000)
-                 == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", true);
+                 == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", SIGNED, true);
     else if ((top & 0b11111110)
                  == 0b00111100) pc += proc_imm_to_accum(head, "cmp");
     else if ((dbl & 0b1111111000111000)
@@ -121,28 +125,28 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
     else if ((top & 0b11111100)
                  == 0b00100000) pc += proc_rm_and_reg_to_either(head, "and", true);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1000000000100000) pc += proc_imm_to_rm(head, "and");
+                 == 0b1000000000100000) pc += proc_imm_to_rm(head, "and", UNSIGNED);
     else if ((top & 0b11111110)
                  == 0b00100100) pc += proc_imm_to_accum(head, "and");
     // TEST
     else if ((top & 0b11111110)
                  == 0b10000100) pc += proc_rm_and_reg_to_either(head, "test");
     else if ((dbl & 0b1111111000111000)
-                 == 0b1111011000000000) pc += proc_imm_to_rm(head, "test");
+                 == 0b1111011000000000) pc += proc_imm_to_rm(head, "test", UNSIGNED);
     else if ((top & 0b11111110)
                  == 0b10101000) pc += proc_imm_to_accum(head, "test");
     // OR
     else if ((top & 0b11111100)
                  == 0b00001000) pc += proc_rm_and_reg_to_either(head, "or", true);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1000000000001000) pc += proc_imm_to_rm(head, "or");
+                 == 0b1000000000001000) pc += proc_imm_to_rm(head, "or", UNSIGNED);
     else if ((top & 0b11111110)
                  == 0b00001100) pc += proc_imm_to_accum(head, "or");
     // XOR
     else if ((top & 0b11111100)
                  == 0b00110000) pc += proc_rm_and_reg_to_either(head, "xor", true);
     else if ((dbl & 0b1111111000111000)
-                 == 0b1000000000110000) pc += proc_imm_to_rm(head, "xor");
+                 == 0b1000000000110000) pc += proc_imm_to_rm(head, "xor", UNSIGNED);
     else if ((top & 0b11111110)
                  == 0b00110100) pc += proc_imm_to_accum(head, "xor");
     // STRING MANIPULATION
@@ -302,7 +306,7 @@ size_t Disassembler::proc_rm_and_reg_to_either(const char *head, const char *nam
   return len;
 }
 
-size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bool s) {
+size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bool sign, const bool s) {
   Inst inst(head);
   if (s) inst.s = head[0] >> 1;
   inst.w = head[0];
@@ -313,7 +317,7 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
   string fixed_name(name);
   fixed_name += inst.w ? "" : " byte";
   cout << inst.get_inst_str(fixed_name.c_str());
-  cout << inst.get_rm_str() << ", " << inst.get_data_str();
+  cout << inst.get_rm_str() << ", " << inst.get_data_str(sign);
 
   return len;
 }
@@ -461,12 +465,12 @@ size_t Disassembler::get_extended_len(const Inst &inst) {
   }
 }
 
-string Disassembler::data_str_wide(const unsigned short data, const bool sign) {
-  return hex_str(sign ? static_cast<short>(data & 0xffff) : (data & 0xffff), sign ? 0 : 4);
+string Disassembler::data_str_wide(const unsigned short data, const bool nat, const bool sign) {
+  return hex_str(sign ? static_cast<short>(data & 0xffff) : (data & 0xffff), nat ? 0 : 4);
 }
 
-string Disassembler::data_str_narrow(const unsigned char data, const bool sign) {
-  return hex_str(sign ? static_cast<char>(data & 0xff) : (data & 0xff), sign ? 0 : 2);
+string Disassembler::data_str_narrow(const unsigned char data, const bool nat, const bool sign) {
+  return hex_str(sign ? static_cast<char>(data & 0xff) : (data & 0xff), nat ? 0 : 2);
 }
 
 string Disassembler::line_number_str(const size_t n) {

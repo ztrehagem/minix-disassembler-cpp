@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "consts.hpp"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ struct Inst {
   string get_inst_str(const char *op);
   string get_reg_name(const bool is_rm = false);
   string get_rm_str();
-  string get_data_str();
+  string get_data_str(const bool sign = SIGNED);
   string get_dist_str();
   string get_accumulator_str();
 };
