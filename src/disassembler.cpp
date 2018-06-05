@@ -4,12 +4,11 @@
 #include <sstream>
 #include "disassembler.hpp"
 #include "inst.hpp"
+#include "util.hpp"
 #include "consts.hpp"
 
 using namespace std;
-
-#define SIGNED true
-#define UNSIGNED false
+using namespace util;
 
 void Disassembler::disassemble() {
   ifs.read(reinterpret_cast<char *>(&header), sizeof(header));
@@ -257,7 +256,7 @@ size_t Disassembler::inst_in_1(const char *head) {
   const size_t len = 2;
   cout << instruction_str(head, len);
   cout << "in " << (inst.w ? "ax" : "al");
-  cout << ", " << Disassembler::data_str_narrow(head[1]);
+  cout << ", " << data_str_narrow(head[1]);
 
   return len;
 }
@@ -454,57 +453,4 @@ size_t Disassembler::proc_disp(const char *head, const char *name, const bool na
   cout << instruction_str(head, len) << name << " ";
   cout << data_str_wide(disp);
   return len;
-}
-
-// statics
-
-unsigned short Disassembler::get_data_wide(const char *head) {
-  return (head[0] & 0xff) + ((head[1] & 0xff) << 8);
-}
-
-unsigned char Disassembler::get_data_narrow(const char *head) {
-  return head[0] & 0xff;
-}
-
-size_t Disassembler::get_extended_len(const Inst &inst) {
-  switch (inst.mod) {
-    case 0b10: return 2;
-    case 0b01: return 1;
-    case 0b00: return inst.rm == 0b110 ? 2 : 0;
-    default: return 0;
-  }
-}
-
-string Disassembler::data_str_wide(const unsigned short data, const bool nat, const bool sign) {
-  return hex_str(sign ? static_cast<short>(data & 0xffff) : (data & 0xffff), nat ? 0 : 4);
-}
-
-string Disassembler::data_str_narrow(const unsigned char data, const bool nat, const bool sign) {
-  return hex_str(sign ? static_cast<char>(data & 0xff) : (data & 0xff), nat ? 0 : 2);
-}
-
-string Disassembler::line_number_str(const size_t n) {
-  return hex_str(n & 0xffff, 4) + ": ";
-}
-
-string Disassembler::instruction_str(const char *head, const size_t len) {
-  ostringstream ss;
-  size_t i = 0;
-  for (; i < len; i++) ss << hex_str(head[i] & 0xff, 2);
-  for (; i < 7; i++) ss << "  ";
-  return ss.str();
-}
-
-string Disassembler::hex_str(int value, size_t w) {
-  ostringstream ss;
-  if (value < 0) {
-    ss << '-';
-    value = -value;
-  }
-  if (w > 0) {
-    ss << setfill('0') << setw(w) << hex << value;
-  } else {
-    ss << hex << value;
-  }
-  return ss.str();
 }

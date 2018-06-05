@@ -1,6 +1,6 @@
 #include <sstream>
 #include "inst.hpp"
-#include "disassembler.hpp"
+#include "util.hpp"
 
 using namespace std;
 
@@ -11,10 +11,10 @@ void Inst::set_mod_sec() {
   rm = head[1];
 
   if (mod == 0b10 || (mod == 0b00 && rm == 0b110)) {
-    disp = static_cast<signed short>(Disassembler::get_data_wide(&head[2]));
+    disp = static_cast<signed short>(util::get_data_wide(&head[2]));
     disp_size = 2;
   } else if (mod == 0b01) {
-    disp = static_cast<signed char>(Disassembler::get_data_narrow(&head[2]));
+    disp = static_cast<signed char>(util::get_data_narrow(&head[2]));
     disp_size = 1;
   }
 }
@@ -23,10 +23,10 @@ void Inst::set_data() {
   const size_t offset = 1 + has_mod_sec + disp_size;
   has_data_sec = true;
   if (is_wide_data()) {
-    data.wide = Disassembler::get_data_wide(&head[offset]);
+    data.wide = util::get_data_wide(&head[offset]);
     data_size = 2;
   } else {
-    data.narrow = Disassembler::get_data_narrow(&head[offset]);
+    data.narrow = util::get_data_narrow(&head[offset]);
     data_size = 1;
   }
 }
@@ -40,7 +40,7 @@ size_t Inst::get_inst_len() {
 }
 
 string Inst::get_inst_str(const char *op) {
-  return Disassembler::instruction_str(head, get_inst_len()) + op + ' ';
+  return util::instruction_str(head, get_inst_len()) + op + ' ';
 }
 
 string Inst::get_reg_name(const bool is_rm) {
@@ -63,7 +63,7 @@ string Inst::get_rm_str() {
   }
 
   if (mod == 0b00 && rm == 0b110) {
-    return "[" + Disassembler::data_str_wide(disp) + "]";
+    return "[" + util::data_str_wide(disp) + "]";
   }
 
   ostringstream oss;
@@ -90,9 +90,9 @@ string Inst::get_rm_str() {
 
 string Inst::get_data_str(const bool sign) {
   if (is_wide_data()) {
-    return Disassembler::data_str_wide(data.wide, false);
+    return util::data_str_wide(data.wide, false);
   } else {
-    return Disassembler::data_str_narrow(data.narrow, true, sign);
+    return util::data_str_narrow(data.narrow, true, sign);
   }
 }
 

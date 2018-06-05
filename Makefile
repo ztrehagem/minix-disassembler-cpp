@@ -1,4 +1,4 @@
-default: disassembler
+default: disassembler interpreter
 
 clean:
 	-rm disassembler
@@ -19,12 +19,20 @@ check:
 	./disassembler bin/7.c.out > out/7.c.txt
 	-diff out/7.c.txt ans/7.c.ans.txt
 
-disassembler: src/main.cpp src/disassembler.cpp src/inst.cpp
+disassembler: src/main-disassembler.cpp src/disassembler.cpp src/inst.cpp src/util.cpp
 	g++ -std=c++11 -o $@ $^
 
-src/main.cpp: src/disassembler.hpp
+interpreter: src/main-interpreter.cpp src/interpreter.cpp src/inst.cpp src/util.cpp
+	g++ -std=c++11 -o $@ $^
+
+src/main-disassembler.cpp: src/disassembler.hpp
+src/main-interpreter.cpp: src/interpreter.hpp
 src/disassembler.hpp: src/a.out.hpp src/inst.hpp
 src/disassembler.cpp: src/disassembler.hpp src/inst.hpp src/consts.hpp
 src/inst.hpp: src/consts.hpp
-src/inst.cpp: src/inst.hpp src/disassembler.hpp
+src/inst.cpp: src/inst.hpp src/util.hpp
+src/interpreter.cpp: src/interpreter.hpp
+src/interpreter.hpp: src/inst.hpp src/a.out.hpp
+src/util.cpp: src/util.hpp
+src/util.hpp:
 src/consts.hpp:
