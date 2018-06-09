@@ -51,6 +51,9 @@ struct Inst {
   string get_dist_str();
   string get_accumulator_str();
 
-  int get_data_value(const bool sign = UNSIGNED);
-  void put_value_reg(struct Reg&, const int value);
+  int get_data_value(bool sign = UNSIGNED);
+  int get_reg_value(const Reg&, bool sign = UNSIGNED);
+  int get_rm_value(const Reg&, const char *data_seg, bool sign = UNSIGNED);
+  void put_value_reg(Reg&, const int value);
+  void put_value_rm(Reg&, char *data_seg, const int value);
 };

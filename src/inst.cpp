@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include "inst.hpp"
 #include "util.hpp"
@@ -110,7 +111,7 @@ string Inst::get_accumulator_str() {
   return w ? "ax" : "al";
 }
 
-int Inst::get_data_value(const bool sign) {
+int Inst::get_data_value(bool sign) {
   if (is_wide_data()) {
     return sign ? static_cast<signed short>(data.wide) : data.wide;
   } else {
@@ -118,23 +119,73 @@ int Inst::get_data_value(const bool sign) {
   }
 }
 
-void Inst::put_value_reg(struct Reg &regis, const int value) {
+int Inst::get_reg_value(const Reg &r, bool sign) {
   switch (reg + (w << 3)) {
-    case 0b1000: regis.a.x = value; break;
-    case 0b0000: regis.a.hl.l = value; break;
-    case 0b1001: regis.c.x = value; break;
-    case 0b0001: regis.c.hl.l = value; break;
-    case 0b1010: regis.d.x = value; break;
-    case 0b0010: regis.d.hl.l = value; break;
-    case 0b1011: regis.b.x = value; break;
-    case 0b0011: regis.b.hl.l = value; break;
-    case 0b1100: regis.sp = value; break;
-    case 0b0100: regis.a.hl.h = value; break;
-    case 0b1101: regis.bp = value; break;
-    case 0b0101: regis.c.hl.h = value; break;
-    case 0b1110: regis.si = value; break;
-    case 0b0110: regis.d.hl.h = value; break;
-    case 0b1111: regis.di = value; break;
-    case 0b0111: regis.b.hl.h = value; break;
+    case 0b1000: return sign ? static_cast<signed short>(r.a.x) : r.a.x;
+    case 0b0000: return sign ? static_cast<signed char>(r.a.hl.l) : r.a.hl.l;
+    case 0b1001: return sign ? static_cast<signed short>(r.c.x) : r.c.x;
+    case 0b0001: return sign ? static_cast<signed char>(r.c.hl.l) : r.c.hl.l;
+    case 0b1010: return sign ? static_cast<signed short>(r.d.x) : r.d.x;
+    case 0b0010: return sign ? static_cast<signed char>(r.d.hl.l) : r.d.hl.l;
+    case 0b1011: return sign ? static_cast<signed short>(r.b.x) : r.b.x;
+    case 0b0011: return sign ? static_cast<signed char>(r.b.hl.l) : r.b.hl.l;
+    case 0b1100: return sign ? static_cast<signed short>(r.sp) : r.sp;
+    case 0b0100: return sign ? static_cast<signed char>(r.a.hl.h) : r.a.hl.h;
+    case 0b1101: return sign ? static_cast<signed short>(r.bp) : r.bp;
+    case 0b0101: return sign ? static_cast<signed char>(r.c.hl.h) : r.c.hl.h;
+    case 0b1110: return sign ? static_cast<signed short>(r.si) : r.si;
+    case 0b0110: return sign ? static_cast<signed char>(r.d.hl.h) : r.d.hl.h;
+    case 0b1111: return sign ? static_cast<signed short>(r.di) : r.di;
+    case 0b0111: return sign ? static_cast<signed char>(r.b.hl.h) : r.b.hl.h;
   }
+  return 0;
+}
+
+int Inst::get_rm_value(const Reg &r, const char *data_seg, bool sign) {
+  if (mod == 0b11) {
+    return get_reg_value(r, sign);
+  }
+
+  if (mod == 0b00 && rm == 0b110) {
+    return sign ? static_cast<signed short>(data_seg[disp]) : data_seg[disp];
+  }
+
+  cout << endl << "not implemented" << endl;
+
+  return 0;
+}
+
+void Inst::put_value_reg(Reg &r, const int value) {
+  switch (reg + (w << 3)) {
+    case 0b1000: r.a.x = value; break;
+    case 0b0000: r.a.hl.l = value; break;
+    case 0b1001: r.c.x = value; break;
+    case 0b0001: r.c.hl.l = value; break;
+    case 0b1010: r.d.x = value; break;
+    case 0b0010: r.d.hl.l = value; break;
+    case 0b1011: r.b.x = value; break;
+    case 0b0011: r.b.hl.l = value; break;
+    case 0b1100: r.sp = value; break;
+    case 0b0100: r.a.hl.h = value; break;
+    case 0b1101: r.bp = value; break;
+    case 0b0101: r.c.hl.h = value; break;
+    case 0b1110: r.si = value; break;
+    case 0b0110: r.d.hl.h = value; break;
+    case 0b1111: r.di = value; break;
+    case 0b0111: r.b.hl.h = value; break;
+  }
+}
+
+void Inst::put_value_rm(Reg& r, char *data_seg, const int value) {
+  if (mod == 0b11) {
+    put_value_reg(r, value);
+    return;
+  }
+
+  if (mod == 0b00 && rm == 0b110) {
+    data_seg[disp] = value;
+    return;
+  }
+
+  cout << endl << "not implemented" << endl;
 }
