@@ -147,7 +147,7 @@ int Inst::get_rm_value(const Reg &r, const char *data_seg, bool sign) {
   }
 
   if (mod == 0b00 && rm == 0b110) {
-    return sign ? static_cast<signed short>(data_seg[disp]) : data_seg[disp];
+    return sign ? static_cast<signed char>(data_seg[disp]) : data_seg[disp];
   }
 
   cout << endl << "not implemented" << endl;
