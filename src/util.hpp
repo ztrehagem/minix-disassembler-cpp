@@ -2,6 +2,7 @@
 
 #include <string>
 #include "inst.hpp"
+#include "reg.hpp"
 
 using namespace std;
 
@@ -12,6 +13,7 @@ namespace util {
   string data_str_wide(const unsigned short data, const bool nat = false, const bool sign = false);
   string data_str_narrow(const unsigned char data, const bool nat = false, const bool sign = false);
   string line_number_str(const size_t);
+  string reg_state_str(struct Reg &reg);
   string instruction_str(const char *head, const size_t len);
   string hex_str(int value, size_t w = 0);
 }

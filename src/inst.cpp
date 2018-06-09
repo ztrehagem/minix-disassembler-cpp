@@ -109,3 +109,32 @@ string Inst::get_dist_str() {
 string Inst::get_accumulator_str() {
   return w ? "ax" : "al";
 }
+
+int Inst::get_data_value(const bool sign) {
+  if (is_wide_data()) {
+    return sign ? static_cast<signed short>(data.wide) : data.wide;
+  } else {
+    return sign ? static_cast<signed char>(data.narrow) : data.narrow;
+  }
+}
+
+void Inst::put_value_reg(struct Reg &regis, const int value) {
+  switch (reg + (w << 3)) {
+    case 0b1000: regis.a.x = value; break;
+    case 0b0000: regis.a.hl.l = value; break;
+    case 0b1001: regis.c.x = value; break;
+    case 0b0001: regis.c.hl.l = value; break;
+    case 0b1010: regis.d.x = value; break;
+    case 0b0010: regis.d.hl.l = value; break;
+    case 0b1011: regis.b.x = value; break;
+    case 0b0011: regis.b.hl.l = value; break;
+    case 0b1100: regis.sp = value; break;
+    case 0b0100: regis.a.hl.h = value; break;
+    case 0b1101: regis.bp = value; break;
+    case 0b0101: regis.c.hl.h = value; break;
+    case 0b1110: regis.si = value; break;
+    case 0b0110: regis.d.hl.h = value; break;
+    case 0b1111: regis.di = value; break;
+    case 0b0111: regis.b.hl.h = value; break;
+  }
+}

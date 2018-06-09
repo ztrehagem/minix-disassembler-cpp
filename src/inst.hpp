@@ -2,6 +2,7 @@
 
 #include <string>
 #include "consts.hpp"
+#include "reg.hpp"
 
 using namespace std;
 
@@ -49,4 +50,7 @@ struct Inst {
   string get_data_str(const bool sign = SIGNED);
   string get_dist_str();
   string get_accumulator_str();
+
+  int get_data_value(const bool sign = UNSIGNED);
+  void put_value_reg(struct Reg&, const int value);
 };

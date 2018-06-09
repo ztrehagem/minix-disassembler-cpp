@@ -28,11 +28,9 @@ interpreter: src/main-interpreter.cpp src/interpreter.cpp src/inst.cpp src/util.
 src/main-disassembler.cpp: src/disassembler.hpp
 src/main-interpreter.cpp: src/interpreter.hpp
 src/disassembler.hpp: src/a.out.hpp src/inst.hpp
-src/disassembler.cpp: src/disassembler.hpp src/inst.hpp src/consts.hpp
+src/disassembler.cpp: src/disassembler.hpp src/inst.hpp src/consts.hpp src/util.hpp
 src/inst.hpp: src/consts.hpp
 src/inst.cpp: src/inst.hpp src/util.hpp
-src/interpreter.cpp: src/interpreter.hpp
-src/interpreter.hpp: src/inst.hpp src/a.out.hpp
+src/interpreter.cpp: src/interpreter.hpp src/inst.hpp src/util.hpp
+src/interpreter.hpp: src/inst.hpp src/a.out.hpp src/reg.hpp
 src/util.cpp: src/util.hpp
-src/util.hpp:
-src/consts.hpp:

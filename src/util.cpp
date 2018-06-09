@@ -32,6 +32,19 @@ string util::line_number_str(const size_t n) {
   return hex_str(n & 0xffff, 4) + ": ";
 }
 
+string util::reg_state_str(struct Reg &reg) {
+  ostringstream ss;
+  ss << hex_str(reg.a.x & 0xff, 4) << ' ';
+  ss << hex_str(reg.b.x & 0xff, 4) << ' ';
+  ss << hex_str(reg.c.x & 0xff, 4) << ' ';
+  ss << hex_str(reg.d.x & 0xff, 4) << ' ';
+  ss << hex_str(reg.sp & 0xff, 4) << ' ';
+  ss << hex_str(reg.bp & 0xff, 4) << ' ';
+  ss << hex_str(reg.si & 0xff, 4) << ' ';
+  ss << hex_str(reg.di & 0xff, 4) << ' ';
+  return ss.str();
+}
+
 string util::instruction_str(const char *head, const size_t len) {
   ostringstream ss;
   size_t i = 0;
