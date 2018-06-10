@@ -31,7 +31,7 @@ void Interpreter::interpret() {
 void Interpreter::execute() {
   size_t pc = 0;
 
-  cout << " AX   BX   CX   DX   SP   BP   SI  DI" << endl;
+  cout << " AX   BX   CX   DX   SP   BP   SI   DI   IP" << endl;
 
   while (pc < header.a_text) {
     cout << util::reg_state_str(reg);
