@@ -2,6 +2,7 @@ default: disassembler interpreter
 
 clean:
 	-rm disassembler
+	-rm interpreter
 
 check-disassemble: disassembler
 	./disassembler bin/1.c.out > out/1.c.txt
