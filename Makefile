@@ -3,7 +3,7 @@ default: disassembler interpreter
 clean:
 	-rm disassembler
 
-check:
+check-disassemble: disassembler
 	./disassembler bin/1.c.out > out/1.c.txt
 	-diff out/1.c.txt ans/1.c.ans.txt
 	./disassembler bin/2.c.out > out/2.c.txt
@@ -19,6 +19,12 @@ check:
 	./disassembler bin/7.c.out > out/7.c.txt
 	-diff out/7.c.txt ans/7.c.ans.txt
 
+check-interpret: interpreter
+	./interpreter bin/1.s.out
+	./interpreter bin/2.s.out
+	./interpreter bin/3.s.out
+	./interpreter bin/4.s.out
+
 disassembler: src/main-disassembler.cpp src/disassembler.cpp src/inst.cpp src/util.cpp
 	g++ -std=c++11 -o $@ $^
 
@@ -31,6 +37,6 @@ src/disassembler.hpp: src/a.out.hpp src/inst.hpp
 src/disassembler.cpp: src/disassembler.hpp src/inst.hpp src/consts.hpp src/util.hpp
 src/inst.hpp: src/consts.hpp
 src/inst.cpp: src/inst.hpp src/util.hpp
-src/interpreter.cpp: src/interpreter.hpp src/inst.hpp src/util.hpp
+src/interpreter.cpp: src/interpreter.hpp src/inst.hpp src/util.hpp src/consts.hpp src/message.hpp
 src/interpreter.hpp: src/inst.hpp src/a.out.hpp src/reg.hpp
 src/util.cpp: src/util.hpp

@@ -7,6 +7,7 @@
 #include "inst.hpp"
 #include "util.hpp"
 #include "consts.hpp"
+#include "message.hpp"
 
 using namespace std;
 
@@ -120,21 +121,21 @@ size_t Interpreter::inst_int_1(const char *head) {
   cout << util::instruction_str(head, len) << "int ";
   cout << util::data_str_narrow(type);
 
-  const unsigned short *args = reinterpret_cast<unsigned short *>(&data_seg[reg.b.x]);
+  Message *m = reinterpret_cast<Message *>(&data_seg[reg.b.x]);
 
-  switch (args[1]) {
+  switch (m->m_type) {
     case 1: // exit
-      cout << endl << "<exit(" << 0 << ")>";
+      cout << endl << "<exit(" << m->m1_i1 << ")>";
       cout << endl << flush;
-      exit(0);
+      exit(m->m1_i1);
       break;
     case 4: // write
       cout << endl << "<write(";
-      cout << args[2] << ", ";
-      cout << "0x" << util::hex_str(args[5], 4) << ", ";
-      cout << args[3] << ")>";
+      cout << m->m1_i1 << ", ";
+      cout << "0x" << util::hex_str(m->m1_p1, sizeof(m->m1_p1) * 2) << ", ";
+      cout << m->m1_i2 << ")>";
       cout << endl << flush;
-      int ret = write(args[2], &data_seg[args[5]], args[3]);
+      int ret = write(m->m1_i1, &data_seg[m->m1_p1], m->m1_i2);
       cout << endl << "=> " << ret;
       break;
   }
