@@ -7,15 +7,15 @@ using namespace std;
 
 void Inst::set_mod_sec() {
   has_mod_sec = true;
-  mod = head[1] >> 6;
-  reg = head[1] >> 3;
-  rm = head[1];
+  mod = *machine.get_head(1) >> 6;
+  reg = *machine.get_head(1) >> 3;
+  rm = *machine.get_head(1);
 
   if (mod == 0b10 || (mod == 0b00 && rm == 0b110)) {
-    disp = static_cast<signed short>(util::get_data_wide(&head[2]));
+    disp = static_cast<signed short>(util::get_data_wide(machine.get_head(2)));
     disp_size = 2;
   } else if (mod == 0b01) {
-    disp = static_cast<signed char>(util::get_data_narrow(&head[2]));
+    disp = static_cast<signed char>(util::get_data_narrow(machine.get_head(2)));
     disp_size = 1;
   }
 }
@@ -24,10 +24,10 @@ void Inst::set_data() {
   const size_t offset = 1 + has_mod_sec + disp_size;
   has_data_sec = true;
   if (is_wide_data()) {
-    data.wide = util::get_data_wide(&head[offset]);
+    data.wide = util::get_data_wide(machine.get_head(offset));
     data_size = 2;
   } else {
-    data.narrow = util::get_data_narrow(&head[offset]);
+    data.narrow = util::get_data_narrow(machine.get_head(offset));
     data_size = 1;
   }
 }
@@ -41,7 +41,7 @@ size_t Inst::get_inst_len() {
 }
 
 string Inst::get_inst_str(const char *op) {
-  return util::instruction_str(head, get_inst_len()) + op + ' ';
+  return util::instruction_str(machine.get_head(), get_inst_len()) + op + ' ';
 }
 
 string Inst::get_reg_name(const bool is_rm) {
@@ -119,8 +119,10 @@ int Inst::get_data_value(bool sign) {
   }
 }
 
-int Inst::get_reg_value(const Reg &r, bool sign) {
-  switch (reg + (w << 3)) {
+int Inst::get_reg_value(bool sign, bool is_rm) {
+  Reg &r = machine.get_reg();
+
+  switch ((is_rm ? rm : reg) + (w << 3)) {
     case 0b1000: return sign ? static_cast<signed short>(r.a.x) : r.a.x;
     case 0b0000: return sign ? static_cast<signed char>(r.a.hl.l) : r.a.hl.l;
     case 0b1001: return sign ? static_cast<signed short>(r.c.x) : r.c.x;
@@ -141,22 +143,48 @@ int Inst::get_reg_value(const Reg &r, bool sign) {
   return 0;
 }
 
-int Inst::get_rm_value(const Reg &r, const char *data_seg, bool sign) {
-  if (mod == 0b11) {
-    return get_reg_value(r, sign);
+int Inst::get_ea_value() {
+  Reg &r = machine.get_reg();
+  int ea;
+
+  switch (rm & 0b111) {
+    case 0b000: ea = r.b.x + r.si; break;
+    case 0b001: ea = r.b.x + r.di; break;
+    case 0b010: ea = r.bp + r.si; break;
+    case 0b011: ea = r.bp + r.di; break;
+    case 0b100: ea = r.si; break;
+    case 0b101: ea = r.di; break;
+    case 0b110: ea = r.bp; break;
+    case 0b111: ea = r.b.x; break;
   }
+
+  ea += disp;
+
+  return ea;
+}
+
+int Inst::get_rm_value(bool sign) {
+  if (mod == 0b11) {
+    return get_reg_value(sign, true);
+  }
+
+  char *data_seg = machine.get_data_seg();
 
   if (mod == 0b00 && rm == 0b110) {
     return sign ? static_cast<signed char>(data_seg[disp]) : data_seg[disp];
   }
 
-  cout << endl << "not implemented" << endl;
+  int ea = get_ea_value();
 
-  return 0;
+  cout << "; (EA:" << hex << ea << "=" << (int)data_seg[ea] << ")";
+
+  return sign ? static_cast<signed char>(data_seg[ea]) : data_seg[ea];
 }
 
-void Inst::put_value_reg(Reg &r, const int value) {
-  switch (reg + (w << 3)) {
+void Inst::put_value_reg(const int value, bool is_rm) {
+  Reg &r = machine.get_reg();
+
+  switch ((is_rm ? rm : reg) + (w << 3)) {
     case 0b1000: r.a.x = value; break;
     case 0b0000: r.a.hl.l = value; break;
     case 0b1001: r.c.x = value; break;
@@ -176,16 +204,20 @@ void Inst::put_value_reg(Reg &r, const int value) {
   }
 }
 
-void Inst::put_value_rm(Reg& r, char *data_seg, const int value) {
+void Inst::put_value_rm(const int value) {
   if (mod == 0b11) {
-    put_value_reg(r, value);
+    put_value_reg(value, true);
     return;
   }
+
+  char *data_seg = machine.get_data_seg();
 
   if (mod == 0b00 && rm == 0b110) {
     data_seg[disp] = value;
     return;
   }
 
-  cout << endl << "not implemented" << endl;
+  int ea = get_ea_value();
+
+  data_seg[ea] = value;
 }

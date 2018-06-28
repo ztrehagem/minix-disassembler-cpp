@@ -1,3 +1,5 @@
+a_text: 4816
+a_data: 530
 0000: 31ed          xor bp, bp
 0002: 89e3          mov bx, sp
 0004: 8b07          mov ax, [bx]
@@ -1936,5 +1938,4 @@
 12ca: 0000          add [bx+si], al
 12cc: 0000          add [bx+si], al
 12ce: 0000          add [bx+si], al
-
 

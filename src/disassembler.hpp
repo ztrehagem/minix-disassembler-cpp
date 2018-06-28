@@ -2,21 +2,16 @@
 
 #include <fstream>
 #include <string>
-#include "a.out.hpp"
-#include "inst.hpp"
+#include "machine.hpp"
 
 using namespace std;
 
-class Disassembler {
+class Disassembler : public Machine {
 public:
-  Disassembler(ifstream &ifs) : ifs(ifs) {};
+  Disassembler(ifstream &ifs) : Machine(ifs) {};
   void disassemble();
 
 private:
-  ifstream& ifs;
-  struct exec header;
-
-  void analyze_text(const char text[], const size_t len);
   size_t inst_in_1(const char *);
   size_t inst_in_2(const char *);
   size_t inst_lea(const char *);

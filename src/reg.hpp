@@ -1,14 +1,18 @@
 #pragma once
 
+#include <string>
+#include <sstream>
+#include "util.hpp"
+
 union SharedReg {
-  unsigned x:16;
+  unsigned short x;
   struct {
-    unsigned h:8;
-    unsigned l:8;
+    unsigned char h;
+    unsigned char l;
   } hl;
 
   SharedReg() {
-    x = 0x00;
+    x = 0x0000;
   }
 };
 
@@ -17,15 +21,28 @@ struct Reg {
   union SharedReg b;
   union SharedReg c;
   union SharedReg d;
-  unsigned sp:16;
-  unsigned bp:16;
-  unsigned si:16;
-  unsigned di:16;
+  unsigned short sp;
+  unsigned short bp;
+  unsigned short si;
+  unsigned short di;
 
   Reg() {
-    sp = 0x00;
-    bp = 0x00;
-    si = 0x00;
-    di = 0x00;
+    sp = 0xffdc;//0x00;
+    bp = 0x0000;
+    si = 0x0000;
+    di = 0x0000;
+  }
+
+  std::string str() {
+    std::ostringstream ss;
+    ss << util::hex_str(a.x & 0xffff, 4) << ' ';
+    ss << util::hex_str(b.x & 0xffff, 4) << ' ';
+    ss << util::hex_str(c.x & 0xffff, 4) << ' ';
+    ss << util::hex_str(d.x & 0xffff, 4) << ' ';
+    ss << util::hex_str(sp & 0xffff, 4) << ' ';
+    ss << util::hex_str(bp & 0xffff, 4) << ' ';
+    ss << util::hex_str(si & 0xffff, 4) << ' ';
+    ss << util::hex_str(di & 0xffff, 4);
+    return ss.str();
   }
 };

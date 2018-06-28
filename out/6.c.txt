@@ -1,3 +1,5 @@
+a_text: 400
+a_data: 12
 0000: 31ed          xor bp, bp
 0002: 89e3          mov bx, sp
 0004: 8b07          mov ax, [bx]
@@ -177,5 +179,4 @@
 018b: ebf8          jmp short 0185
 018d: 0000          add [bx+si], al
 018f: 0000          add [bx+si], al
-
 

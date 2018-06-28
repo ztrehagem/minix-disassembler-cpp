@@ -1,13 +1,15 @@
 #pragma once
 
 #include <string>
+#include "machine.hpp"
 #include "consts.hpp"
 #include "reg.hpp"
 
 using namespace std;
 
 struct Inst {
-  const char *head;
+  // const char *head;
+  Machine &machine;
   unsigned s:1;
   unsigned v:1;
   unsigned w:1;
@@ -25,7 +27,7 @@ struct Inst {
   bool has_mod_sec;
   bool has_data_sec;
 
-  Inst(const char *head) : head(head) {
+  Inst(Machine *machine) : machine(*machine) {
     s = 0;
     v = 0;
     w = 1;
@@ -52,8 +54,9 @@ struct Inst {
   string get_accumulator_str();
 
   int get_data_value(bool sign = UNSIGNED);
-  int get_reg_value(const Reg&, bool sign = UNSIGNED);
-  int get_rm_value(const Reg&, const char *data_seg, bool sign = UNSIGNED);
-  void put_value_reg(Reg&, const int value);
-  void put_value_rm(Reg&, char *data_seg, const int value);
+  int get_reg_value(bool sign = UNSIGNED, bool is_rm = false);
+  int get_ea_value();
+  int get_rm_value(bool sign = UNSIGNED);
+  void put_value_reg(const int value, bool is_rm = false);
+  void put_value_rm(const int value);
 };

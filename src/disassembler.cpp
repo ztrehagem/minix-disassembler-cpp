@@ -11,23 +11,10 @@ using namespace std;
 using namespace util;
 
 void Disassembler::disassemble() {
-  ifs.read(reinterpret_cast<char *>(&header), sizeof(header));
-  // cout << "a_text = " << header.a_text << endl;
-
-  char text[header.a_text];
-  ifs.read(text, sizeof(text));
-  analyze_text(text, sizeof(text));
-
-  cout << endl;
-}
-
-void Disassembler::analyze_text(const char text[], const size_t len) {
-  size_t pc = 0;
-
-  while (pc < len) {
+  while (pc < header.a_text) {
     cout << line_number_str(pc);
 
-    const char *head = &text[pc];
+    const char *head = &text_seg[pc];
     const unsigned short top = head[0] & 0xff;
     const unsigned short dbl = (head[0] << 8 & 0xff00) + (head[1] & 0xff);
 
@@ -250,7 +237,7 @@ void Disassembler::analyze_text(const char text[], const size_t len) {
 }
 
 size_t Disassembler::inst_in_1(const char *head) {
-  Inst inst(head);
+  Inst inst(this);
   inst.w = head[0];
 
   const size_t len = 2;
@@ -262,7 +249,7 @@ size_t Disassembler::inst_in_1(const char *head) {
 }
 
 size_t Disassembler::inst_in_2(const char *head) {
-  Inst inst(head);
+  Inst inst(this);
   inst.w = head[0];
 
   const size_t len = 1;
@@ -273,7 +260,7 @@ size_t Disassembler::inst_in_2(const char *head) {
 }
 
 size_t Disassembler::inst_lea(const char *head) {
-  Inst inst(head);
+  Inst inst(this);
   inst.set_mod_sec();
 
   const size_t len = inst.get_inst_len();
@@ -303,7 +290,7 @@ size_t Disassembler::inst_rep(const char *head) {
 // templates
 
 size_t Disassembler::proc_rm_and_reg_to_either(const char *head, const char *name, const bool d) {
-  Inst inst(head);
+  Inst inst(this);
   if (d) inst.d = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec();
@@ -316,7 +303,7 @@ size_t Disassembler::proc_rm_and_reg_to_either(const char *head, const char *nam
 }
 
 size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bool sign, const bool s) {
-  Inst inst(head);
+  Inst inst(this);
   if (s) inst.s = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec();
@@ -332,7 +319,7 @@ size_t Disassembler::proc_imm_to_rm(const char *head, const char *name, const bo
 }
 
 size_t Disassembler::proc_imm_to_reg(const char *head, const char *name) {
-  Inst inst(head);
+  Inst inst(this);
   inst.w = head[0] >> 3;
   inst.reg = head[0];
   inst.set_data();
@@ -345,7 +332,7 @@ size_t Disassembler::proc_imm_to_reg(const char *head, const char *name) {
 }
 
 size_t Disassembler::proc_imm_to_accum(const char *head, const char *name) {
-  Inst inst(head);
+  Inst inst(this);
   inst.w = head[0];
   inst.set_data();
 
@@ -357,7 +344,7 @@ size_t Disassembler::proc_imm_to_accum(const char *head, const char *name) {
 }
 
 size_t Disassembler::proc_rm(const char *head, const char *name, const bool w) {
-  Inst inst(head);
+  Inst inst(this);
   if (w) inst.w = head[0];
   inst.set_mod_sec();
 
@@ -369,7 +356,7 @@ size_t Disassembler::proc_rm(const char *head, const char *name, const bool w) {
 }
 
 size_t Disassembler::proc_reg(const char *head, const char *name) {
-  Inst inst(head);
+  Inst inst(this);
   inst.reg = head[0];
 
   const size_t len = inst.get_inst_len();
@@ -380,7 +367,7 @@ size_t Disassembler::proc_reg(const char *head, const char *name) {
 }
 
 size_t Disassembler::proc_reg_with_accum(const char *head, const char *name) {
-  Inst inst(head);
+  Inst inst(this);
   inst.reg = head[0];
 
   const size_t len = inst.get_inst_len();
@@ -391,7 +378,7 @@ size_t Disassembler::proc_reg_with_accum(const char *head, const char *name) {
 }
 
 size_t Disassembler::proc_logic(const char *head, const char *name, const bool v) {
-  Inst inst(head);
+  Inst inst(this);
   if (v) inst.v = head[0] >> 1;
   inst.w = head[0];
   inst.set_mod_sec();
@@ -418,7 +405,7 @@ size_t Disassembler::proc_jmp_direct_within_segment(const char *head, const char
 }
 
 size_t Disassembler::proc_jmp_indirect_within_segment(const char *head, const char *name) {
-  Inst inst(head);
+  Inst inst(this);
   inst.set_mod_sec();
 
   const size_t len = inst.get_inst_len();
