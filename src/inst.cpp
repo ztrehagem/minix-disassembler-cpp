@@ -181,7 +181,12 @@ int Inst::get_rm_value(bool sign) {
   return sign ? static_cast<signed char>(data_seg[ea]) : data_seg[ea];
 }
 
-void Inst::put_value_reg(const int value, bool is_rm) {
+int Inst::get_accum_value() {
+  Reg &r = machine.get_reg();
+  return is_wide_data() ? r.a.x : r.a.hl.l;
+}
+
+void Inst::put_value_reg(const unsigned int value, bool is_rm) {
   Reg &r = machine.get_reg();
 
   switch ((is_rm ? rm : reg) + (w << 3)) {
@@ -204,7 +209,7 @@ void Inst::put_value_reg(const int value, bool is_rm) {
   }
 }
 
-void Inst::put_value_rm(const int value) {
+void Inst::put_value_rm(const unsigned int value) {
   if (mod == 0b11) {
     put_value_reg(value, true);
     return;
@@ -220,4 +225,13 @@ void Inst::put_value_rm(const int value) {
   int ea = get_ea_value();
 
   data_seg[ea] = value;
+}
+
+void Inst::put_accum_value(const unsigned int value) {
+  Reg &r = machine.get_reg();
+  if (is_wide_data()) {
+    r.a.x = value;
+  } else {
+    r.a.hl.l = value;
+  }
 }

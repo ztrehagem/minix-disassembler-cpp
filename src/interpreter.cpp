@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
+#include <cmath>
 #include "interpreter.hpp"
 #include "inst.hpp"
 #include "util.hpp"
@@ -11,24 +12,51 @@
 
 using namespace std;
 
-operation Interpreter::fn_mov = [](int d, int s, Flags &f) {
+operation Interpreter::fn_mov = [](short d, short s, Flags &f) {
   return s;
 };
-operation Interpreter::fn_sub = [](int d, int s, Flags &f) {
+operation Interpreter::fn_sub = [](short d, short s, Flags &f) {
   int result = d - s;
-  f.o = false; // FIXME 
+  f.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   f.s = result < 0;
   f.z = result == 0;
   f.c = false; // FIXME
   return result;
 };
-operation Interpreter::fn_xor = [](int d, int s, Flags &f) {
+operation Interpreter::fn_xor = [](short d, short s, Flags &f) {
   int result = d ^ s;
   f.o = false;
   f.s = result < 0;
   f.z = result == 0;
   f.c = false;
   return result;
+};
+operation Interpreter::fn_add = [](short d, short s, Flags &f) {
+  int result = d + s;
+  f.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
+  f.s = result < 0;
+  f.z = result == 0;
+  f.c = result > SHRT_MAX;
+  return result;
+};
+operation Interpreter::fn_cmp = [](short d, short s, Flags &f) {
+  int result = d - s;
+  f.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
+  f.s = result < 0;
+  f.z = result == 0;
+  f.c = false; // FIXME
+  return d;
+};
+operation Interpreter::fn_jnb = [](short orig, short disp, Flags &f) {
+  return !f.s ? disp : orig;
+};
+operation Interpreter::fn_test = [](short src1, short src2, Flags &f) {
+  int result = src1 & src2;
+  f.o = 0;
+  f.s = result < 0;
+  f.z = result == 0;
+  f.c = 0;
+  return 0;
 };
 
 void Interpreter::interpret() {
@@ -65,14 +93,14 @@ void Interpreter::interpret() {
     //              == 0b11100100) pc += inst_in_1(head);
     // else if ((top & 0b11111110)
     //              == 0b11101100) pc += inst_in_2(head);
-    // else if ((top & 0b11111111)
-    //              == 0b10001101) pc += inst_lea(head);
-    // else if ((top & 0b11111100)
-    //              == 0b00000000) pc += proc_rm_and_reg_to_either(head, "add", true);
-    // else if ((dbl & 0b1111110000111000)
-    //              == 0b1000000000000000) pc += proc_imm_to_rm(head, "add", SIGNED, true);
-    // else if ((top & 0b11111110)
-    //              == 0b00000100) pc += proc_imm_to_accum(head, "add");
+    else if ((top & 0b11111111)
+                 == 0b10001101) pc += inst_lea(head);
+    else if ((top & 0b11111100)
+                 == 0b00000000) pc += proc_rm_and_reg_to_either(head, "add", fn_add, true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1000000000000000) pc += proc_imm_to_rm(head, "add", fn_add, SIGNED, true);
+    else if ((top & 0b11111110)
+                 == 0b00000100) pc += proc_imm_to_accum(head, "add", fn_add);
     // else if ((top & 0b11111100)
     //              == 0b00010000) pc += proc_rm_and_reg_to_either(head, "adc", true);
     // else if ((dbl & 0b1111110000111000)
@@ -101,12 +129,12 @@ void Interpreter::interpret() {
     //              == 0b01001000) pc += proc_reg(head, "dec");
     // else if ((dbl & 0b1111111000111000)
     //              == 0b1111011000011000) pc += proc_rm(head, "neg", true);
-    // else if ((top & 0b11111100)
-    //              == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp", true);
-    // else if ((dbl & 0b1111110000111000)
-    //              == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", SIGNED, true);
-    // else if ((top & 0b11111110)
-    //              == 0b00111100) pc += proc_imm_to_accum(head, "cmp");
+    else if ((top & 0b11111100)
+                 == 0b00111000) pc += proc_rm_and_reg_to_either(head, "cmp", fn_cmp, true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1000000000111000) pc += proc_imm_to_rm(head, "cmp", fn_cmp, SIGNED, true);
+    else if ((top & 0b11111110)
+                 == 0b00111100) pc += proc_imm_to_accum(head, "cmp", fn_cmp);
     // else if ((dbl & 0b1111111000111000)
     //              == 0b1111011000100000) pc += proc_rm(head, "mul", true);
     // else if ((dbl & 0b1111111000111000)
@@ -139,13 +167,13 @@ void Interpreter::interpret() {
     //              == 0b1000000000100000) pc += proc_imm_to_rm(head, "and", UNSIGNED);
     // else if ((top & 0b11111110)
     //              == 0b00100100) pc += proc_imm_to_accum(head, "and");
-    // // TEST
-    // else if ((top & 0b11111110)
-    //              == 0b10000100) pc += proc_rm_and_reg_to_either(head, "test");
-    // else if ((dbl & 0b1111111000111000)
-    //              == 0b1111011000000000) pc += proc_imm_to_rm(head, "test", UNSIGNED);
-    // else if ((top & 0b11111110)
-    //              == 0b10101000) pc += proc_imm_to_accum(head, "test");
+    // TEST
+    else if ((top & 0b11111110)
+                 == 0b10000100) pc += proc_rm_and_reg_to_either(head, "test", fn_test);
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111011000000000) pc += proc_imm_to_rm(head, "test", fn_test, UNSIGNED);
+    else if ((top & 0b11111110)
+                 == 0b10101000) pc += proc_imm_to_accum(head, "test", fn_test);
     // // OR
     // else if ((top & 0b11111100)
     //              == 0b00001000) pc += proc_rm_and_reg_to_either(head, "or", true);
@@ -210,8 +238,8 @@ void Interpreter::interpret() {
     //              == 0b01111101) pc += proc_branch(head, "jnl", pc);
     // else if ((top & 0b11111111)
     //              == 0b01111111) pc += proc_branch(head, "jnle", pc);
-    // else if ((top & 0b11111111)
-    //              == 0b01110011) pc += proc_branch(head, "jnb", pc);
+    else if ((top & 0b11111111)
+                 == 0b01110011) pc += proc_branch(head, "jnb", fn_jnb);
     // else if ((top & 0b11111111)
     //              == 0b01110111) pc += proc_branch(head, "jnbe", pc);
     // else if ((top & 0b11111111)
@@ -324,20 +352,42 @@ size_t Interpreter::proc_imm_to_reg(const char *head, const char *name, operatio
   return len;
 }
 
-// size_t Interpreter::proc_imm_to_accum(const char *head, const char *name, operation op) {
-//   Inst inst(this);
-//   inst.w = head[0];
-//   inst.set_data();
+size_t Interpreter::proc_imm_to_accum(const char *head, const char *name, operation op) {
+  Inst inst(this);
+  inst.w = head[0];
+  inst.set_data();
 
-//   const size_t len = inst.get_inst_len();
-//   cout << inst.get_inst_str(name);
-//   cout << inst.get_accumulator_str() << ", " << inst.get_data_str();
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_accumulator_str() << ", " << inst.get_data_str();
 
-//   const int data = op()
+  const int data = op(inst.get_accum_value(), inst.get_data_value(), flags);
+  inst.put_accum_value(data);
 
-//   return len;
-// }
+  return len;
+}
 
+size_t Interpreter::proc_branch(const char *head, const char *name, operation op) {
+  const char disp = util::get_data_narrow(&head[1]);
+  const size_t len = 2;
+  cout << util::instruction_str(head, len) << name << " ";
+  cout << util::data_str_wide(pc + len + disp);
+  return op(len, len + disp, flags);
+}
+
+size_t Interpreter::inst_lea(const char *head) {
+  Inst inst(this);
+  inst.set_mod_sec();
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str("lea");
+  cout << inst.get_reg_name() << ", " << inst.get_rm_str();
+
+  const int ea = inst.get_ea_value();
+  inst.put_value_reg(ea);
+
+  return len;
+}
 
 size_t Interpreter::inst_int_1(const char *head) {
   const unsigned char type = util::get_data_narrow(&head[1]);
