@@ -12,49 +12,59 @@
 
 using namespace std;
 
-operation Interpreter::fn_mov = [](short d, short s, Flags &f) {
+operation Interpreter::fn_mov = [](Machine *m, short d, short s) {
   return s;
 };
-operation Interpreter::fn_sub = [](short d, short s, Flags &f) {
+operation Interpreter::fn_push = [](Machine *m, short is_wide, short value) {
+  m->reg.sp -= is_wide ? 2 : 1;
+  is_wide ? m->write_data_16(m->reg.sp, value) : m->write_data_8(m->reg.sp, value);
+  return value;
+};
+operation Interpreter::fn_pop = [](Machine *m, short is_wide, short _) {
+  int result = is_wide ? m->read_data_16(m->reg.sp) : m->read_data_8(m->reg.sp);
+  m->reg.sp += is_wide ? 2 : 1;
+  return result;
+};
+operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
   int result = d - s;
-  f.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
-  f.s = result < 0;
-  f.z = result == 0;
-  f.c = d < s;
+  m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = d < s;
   return result;
 };
-operation Interpreter::fn_xor = [](short d, short s, Flags &f) {
+operation Interpreter::fn_xor = [](Machine *m, short d, short s) {
   int result = d ^ s;
-  f.o = false;
-  f.s = result < 0;
-  f.z = result == 0;
-  f.c = false;
+  m->flags.o = false;
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = false;
   return result;
 };
-operation Interpreter::fn_add = [](short d, short s, Flags &f) {
+operation Interpreter::fn_add = [](Machine *m, short d, short s) {
   int result = d + s;
-  f.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
-  f.s = result < 0;
-  f.z = result == 0;
-  f.c = (SHRT_MAX - d) < s;
+  m->flags.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = (SHRT_MAX - d) < s;
   return result;
 };
-operation Interpreter::fn_cmp = [](short d, short s, Flags &f) {
-  fn_sub(d, s, f);
+operation Interpreter::fn_cmp = [](Machine *m, short d, short s) {
+  fn_sub(m, d, s);
   return d;
 };
-operation Interpreter::fn_jne = [](short orig, short disp, Flags &f) {
-  return !f.z ? disp : orig;
+operation Interpreter::fn_jne = [](Machine *m, short orig, short disp) {
+  return !m->flags.z ? disp : orig;
 };
-operation Interpreter::fn_jnb = [](short orig, short disp, Flags &f) {
-  return !f.s ? disp : orig;
+operation Interpreter::fn_jnb = [](Machine *m, short orig, short disp) {
+  return !m->flags.s ? disp : orig;
 };
-operation Interpreter::fn_test = [](short src1, short src2, Flags &f) {
+operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
   int result = src1 & src2;
-  f.o = 0;
-  f.s = result < 0;
-  f.z = result == 0;
-  f.c = 0;
+  m->flags.o = 0;
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = 0;
   return 0;
 };
 
@@ -76,14 +86,14 @@ void Interpreter::interpret() {
                  == 0b1100011000000000) pc += proc_imm_to_rm(head, "mov", fn_mov, SIGNED);
     else if ((top & 0b11110000)
                  == 0b10110000) pc += proc_imm_to_reg(head, "mov", fn_mov);
-    // else if ((dbl & 0b1111111100111000)
-    //              == 0b1111111100110000) pc += proc_rm(head, "push");
-    // else if ((top & 0b11111000)
-    //              == 0b01010000) pc += proc_reg(head, "push");
-    // else if ((dbl & 0b1111111100111000)
-    //              == 0b1000111100000000) pc += proc_rm(head, "pop");
-    // else if ((top & 0b11111000)
-    //              == 0b01011000) pc += proc_reg(head, "pop");
+    else if ((dbl & 0b1111111100111000)
+                 == 0b1111111100110000) pc += proc_rm(head, "push", fn_push);
+    else if ((top & 0b11111000)
+                 == 0b01010000) pc += proc_reg(head, "push", fn_push);
+    else if ((dbl & 0b1111111100111000)
+                 == 0b1000111100000000) pc += proc_rm(head, "pop", fn_pop);
+    else if ((top & 0b11111000)
+                 == 0b01011000) pc += proc_reg(head, "pop", fn_pop);
     // else if ((top & 0b11111110)
     //              == 0b10000110) pc += proc_rm_and_reg_to_either(head, "xchg");
     // else if ((top & 0b11111000)
@@ -302,13 +312,13 @@ size_t Interpreter::proc_rm_and_reg_to_either(const char *head, const char *name
   if (inst.d) {
     const int d = inst.get_reg_value();
     const int s = inst.get_rm_value();
-    const int data = op(d, s, flags);
+    const int data = op(this, d, s);
     inst.put_reg_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   } else {
     const int d = inst.get_rm_value();
     const int s = inst.get_reg_value();
-    const int data = op(d, s, flags);
+    const int data = op(this, d, s);
     inst.put_rm_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   }
@@ -330,7 +340,7 @@ size_t Interpreter::proc_imm_to_rm(const char *head, const char *name, operation
   cout << inst.get_inst_str(fixed_name.c_str());
   cout << inst.get_rm_str() << ", " << inst.get_data_str(sign);
 
-  const int data = op(inst.get_rm_value(is_wide), inst.get_data_value(), flags);
+  const int data = op(this, inst.get_rm_value(is_wide), inst.get_data_value());
   inst.put_rm_value(data, is_wide);
 
   return len;
@@ -346,7 +356,7 @@ size_t Interpreter::proc_imm_to_reg(const char *head, const char *name, operatio
   cout << inst.get_inst_str(name);
   cout << inst.get_reg_name() << ", " << inst.get_data_str();
 
-  const int data = op(inst.get_reg_value(), inst.get_data_value(), flags);
+  const int data = op(this, inst.get_reg_value(), inst.get_data_value());
   inst.put_reg_value(data);
 
   return len;
@@ -361,8 +371,37 @@ size_t Interpreter::proc_imm_to_accum(const char *head, const char *name, operat
   cout << inst.get_inst_str(name);
   cout << inst.get_accumulator_str() << ", " << inst.get_data_str();
 
-  const int data = op(inst.get_accum_value(), inst.get_data_value(), flags);
+  const int data = op(this, inst.get_accum_value(), inst.get_data_value());
   inst.put_accum_value(data);
+
+  return len;
+}
+
+size_t Interpreter::proc_rm(const char *head, const char *name, operation op, const bool w) {
+  Inst inst(this);
+  if (w) inst.w = head[0];
+  inst.set_mod_sec();
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_rm_str();
+
+  const int data = op(this, inst.is_wide_data(), inst.get_rm_value());
+  inst.put_rm_value(data);
+
+  return len;
+}
+
+size_t Interpreter::proc_reg(const char *head, const char *name, operation op) {
+  Inst inst(this);
+  inst.reg = head[0];
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_reg_name();
+
+  const int data = op(this, inst.is_wide_data(), inst.get_reg_value());
+  inst.put_reg_value(data);
 
   return len;
 }
@@ -372,7 +411,7 @@ size_t Interpreter::proc_branch(const char *head, const char *name, operation op
   const size_t len = 2;
   cout << util::instruction_str(head, len) << name << " ";
   cout << util::data_str_wide(pc + len + disp);
-  return op(len, len + disp, flags);
+  return op(this, len, len + disp);
 }
 
 size_t Interpreter::inst_lea(const char *head) {

@@ -8,7 +8,7 @@ Machine::Machine(std::ifstream &ifs) : ifs(ifs) {
   print_header();
 
   text_seg = new char[header.a_text];
-  data_seg = new char[header.a_data];
+  data_seg = new char[0xffff];
 
   ifs.read(text_seg, header.a_text);
   ifs.read(data_seg, header.a_data);
@@ -46,10 +46,6 @@ void Machine::write_data_8(size_t pos, char value) {
 void Machine::write_data_16(size_t pos, short value) {
   data_seg[pos] = 0xff & value;
   data_seg[pos + 1] = 0xff & (value >> 8);
-}
-
-struct Reg &Machine::get_reg() {
-  return reg;
 }
 
 void Machine::print_header() {

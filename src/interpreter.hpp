@@ -6,7 +6,7 @@
 
 using namespace std;
 
-typedef function<short(short, short, Flags &)> operation;
+typedef function<short(Machine *, short, short)> operation;
 
 class Interpreter : public Machine {
 public:
@@ -15,6 +15,8 @@ public:
 
 private:
   static operation fn_mov;
+  static operation fn_push;
+  static operation fn_pop;
   static operation fn_sub;
   static operation fn_xor;
   static operation fn_add;
@@ -27,6 +29,8 @@ private:
   size_t proc_imm_to_rm(const char *head, const char *name, operation, const bool sign, const bool s = false);
   size_t proc_imm_to_reg(const char *head, const char *name, operation);
   size_t proc_imm_to_accum(const char *head, const char *name, operation);
+  size_t proc_rm(const char *head, const char *name, operation, bool w = false);
+  size_t proc_reg(const char *head, const char *name, operation);
   size_t proc_branch(const char *head, const char *name, operation);
   size_t inst_lea(const char *head);
   size_t inst_int_1(const char *head);

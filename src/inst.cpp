@@ -120,42 +120,39 @@ int Inst::get_data_value() {
 }
 
 int Inst::get_reg_value(bool is_rm) {
-  Reg &r = machine.get_reg();
-
   switch ((is_rm ? rm : reg) + (w << 3)) {
-    case 0b1000: return r.a.x;
-    case 0b0000: return r.a.hl.l;
-    case 0b1001: return r.c.x;
-    case 0b0001: return r.c.hl.l;
-    case 0b1010: return r.d.x;
-    case 0b0010: return r.d.hl.l;
-    case 0b1011: return r.b.x;
-    case 0b0011: return r.b.hl.l;
-    case 0b1100: return r.sp;
-    case 0b0100: return r.a.hl.h;
-    case 0b1101: return r.bp;
-    case 0b0101: return r.c.hl.h;
-    case 0b1110: return r.si;
-    case 0b0110: return r.d.hl.h;
-    case 0b1111: return r.di;
-    case 0b0111: return r.b.hl.h;
+    case 0b1000: return machine.reg.a.x;
+    case 0b0000: return machine.reg.a.hl.l;
+    case 0b1001: return machine.reg.c.x;
+    case 0b0001: return machine.reg.c.hl.l;
+    case 0b1010: return machine.reg.d.x;
+    case 0b0010: return machine.reg.d.hl.l;
+    case 0b1011: return machine.reg.b.x;
+    case 0b0011: return machine.reg.b.hl.l;
+    case 0b1100: return machine.reg.sp;
+    case 0b0100: return machine.reg.a.hl.h;
+    case 0b1101: return machine.reg.bp;
+    case 0b0101: return machine.reg.c.hl.h;
+    case 0b1110: return machine.reg.si;
+    case 0b0110: return machine.reg.d.hl.h;
+    case 0b1111: return machine.reg.di;
+    case 0b0111: return machine.reg.b.hl.h;
   }
   return 0;
 }
 
 int Inst::get_ea_value() {
-  Reg &r = machine.get_reg();
   int ea;
 
   switch (rm & 0b111) {
-    case 0b000: ea = r.b.x + r.si; break;
-    case 0b001: ea = r.b.x + r.di; break;
-    case 0b010: ea = r.bp + r.si; break;
-    case 0b011: ea = r.bp + r.di; break;
-    case 0b100: ea = r.si; break;
-    case 0b101: ea = r.di; break;
-    case 0b110: ea = r.bp; break;
-    case 0b111: ea = r.b.x; break;
+    case 0b000: ea = machine.reg.b.x + machine.reg.si; break;
+    case 0b001: ea = machine.reg.b.x + machine.reg.di; break;
+    case 0b010: ea = machine.reg.bp + machine.reg.si; break;
+    case 0b011: ea = machine.reg.bp + machine.reg.di; break;
+    case 0b100: ea = machine.reg.si; break;
+    case 0b101: ea = machine.reg.di; break;
+    case 0b110: ea = machine.reg.bp; break;
+    case 0b111: ea = machine.reg.b.x; break;
   }
 
   ea += disp;
@@ -185,30 +182,27 @@ int Inst::get_rm_value(bool is_wide) {
 }
 
 int Inst::get_accum_value() {
-  Reg &r = machine.get_reg();
-  return is_wide_data() ? r.a.x : r.a.hl.l;
+  return is_wide_data() ? machine.reg.a.x : machine.reg.a.hl.l;
 }
 
 void Inst::put_reg_value(const unsigned int value, bool is_rm) {
-  Reg &r = machine.get_reg();
-
   switch ((is_rm ? rm : reg) + (w << 3)) {
-    case 0b1000: r.a.x = value; break;
-    case 0b0000: r.a.hl.l = value; break;
-    case 0b1001: r.c.x = value; break;
-    case 0b0001: r.c.hl.l = value; break;
-    case 0b1010: r.d.x = value; break;
-    case 0b0010: r.d.hl.l = value; break;
-    case 0b1011: r.b.x = value; break;
-    case 0b0011: r.b.hl.l = value; break;
-    case 0b1100: r.sp = value; break;
-    case 0b0100: r.a.hl.h = value; break;
-    case 0b1101: r.bp = value; break;
-    case 0b0101: r.c.hl.h = value; break;
-    case 0b1110: r.si = value; break;
-    case 0b0110: r.d.hl.h = value; break;
-    case 0b1111: r.di = value; break;
-    case 0b0111: r.b.hl.h = value; break;
+    case 0b1000: machine.reg.a.x = value; break;
+    case 0b0000: machine.reg.a.hl.l = value; break;
+    case 0b1001: machine.reg.c.x = value; break;
+    case 0b0001: machine.reg.c.hl.l = value; break;
+    case 0b1010: machine.reg.d.x = value; break;
+    case 0b0010: machine.reg.d.hl.l = value; break;
+    case 0b1011: machine.reg.b.x = value; break;
+    case 0b0011: machine.reg.b.hl.l = value; break;
+    case 0b1100: machine.reg.sp = value; break;
+    case 0b0100: machine.reg.a.hl.h = value; break;
+    case 0b1101: machine.reg.bp = value; break;
+    case 0b0101: machine.reg.c.hl.h = value; break;
+    case 0b1110: machine.reg.si = value; break;
+    case 0b0110: machine.reg.d.hl.h = value; break;
+    case 0b1111: machine.reg.di = value; break;
+    case 0b0111: machine.reg.b.hl.h = value; break;
   }
 }
 
@@ -235,10 +229,9 @@ void Inst::put_rm_value(const unsigned int value, bool is_wide) {
 }
 
 void Inst::put_accum_value(const unsigned int value) {
-  Reg &r = machine.get_reg();
   if (is_wide_data()) {
-    r.a.x = value;
+    machine.reg.a.x = value;
   } else {
-    r.a.hl.l = value;
+    machine.reg.a.hl.l = value;
   }
 }

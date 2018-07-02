@@ -17,15 +17,14 @@ public:
   short read_data_16(size_t pos);
   void write_data_8(size_t pos, char value);
   void write_data_16(size_t pos, short value);
-  struct Reg &get_reg();
+  struct Reg reg;
+  struct Flags flags;
 
 protected:
   std::ifstream &ifs;
   struct exec header;
   char *text_seg;
   char *data_seg;
-  struct Reg reg;
-  struct Flags flags;
   size_t pc;
 
 private:
