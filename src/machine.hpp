@@ -13,6 +13,10 @@ public:
   struct exec &get_header();
   char *get_head(size_t offset = 0);
   char *get_data_seg();
+  char read_data_8(size_t pos);
+  short read_data_16(size_t pos);
+  void write_data_8(size_t pos, char value);
+  void write_data_16(size_t pos, short value);
   struct Reg &get_reg();
 
 protected:

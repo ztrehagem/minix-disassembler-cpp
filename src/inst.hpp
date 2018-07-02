@@ -53,12 +53,14 @@ struct Inst {
   string get_dist_str();
   string get_accumulator_str();
 
-  int get_data_value(bool sign = UNSIGNED);
-  int get_reg_value(bool sign = UNSIGNED, bool is_rm = false);
+  int get_data_value();
+  int get_reg_value(bool is_rm = false);
   int get_ea_value();
-  int get_rm_value(bool sign = UNSIGNED);
+  int get_rm_value();
+  int get_rm_value(bool is_wide);
   int get_accum_value();
-  void put_value_reg(const unsigned int value, bool is_rm = false);
-  void put_value_rm(const unsigned int value);
+  void put_reg_value(const unsigned int value, bool is_rm = false);
+  void put_rm_value(const unsigned int value);
+  void put_rm_value(const unsigned int value, bool is_wide);
   void put_accum_value(const unsigned int value);
 };

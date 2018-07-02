@@ -43,6 +43,9 @@ operation Interpreter::fn_cmp = [](short d, short s, Flags &f) {
   fn_sub(d, s, f);
   return d;
 };
+operation Interpreter::fn_jne = [](short orig, short disp, Flags &f) {
+  return !f.z ? disp : orig;
+};
 operation Interpreter::fn_jnb = [](short orig, short disp, Flags &f) {
   return !f.s ? disp : orig;
 };
@@ -228,8 +231,8 @@ void Interpreter::interpret() {
     //              == 0b01110000) pc += proc_branch(head, "jo", pc);
     // else if ((top & 0b11111111)
     //              == 0b01111000) pc += proc_branch(head, "js", pc);
-    // else if ((top & 0b11111111)
-    //              == 0b01110101) pc += proc_branch(head, "jne", pc);
+    else if ((top & 0b11111111)
+                 == 0b01110101) pc += proc_branch(head, "jne", fn_jne);
     // else if ((top & 0b11111111)
     //              == 0b01111101) pc += proc_branch(head, "jnl", pc);
     // else if ((top & 0b11111111)
@@ -300,13 +303,13 @@ size_t Interpreter::proc_rm_and_reg_to_either(const char *head, const char *name
     const int d = inst.get_reg_value();
     const int s = inst.get_rm_value();
     const int data = op(d, s, flags);
-    inst.put_value_reg(data);
+    inst.put_reg_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   } else {
     const int d = inst.get_rm_value();
     const int s = inst.get_reg_value();
     const int data = op(d, s, flags);
-    inst.put_value_rm(data);
+    inst.put_rm_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   }
 
@@ -321,13 +324,14 @@ size_t Interpreter::proc_imm_to_rm(const char *head, const char *name, operation
   inst.set_data();
 
   const size_t len = inst.get_inst_len();
+  bool is_wide = !(!inst.w && inst.mod != 0b11);
   string fixed_name(name);
-  fixed_name += (!inst.w && inst.mod != 0b11) ? " byte" : "";
+  fixed_name += is_wide ? "" : " byte";
   cout << inst.get_inst_str(fixed_name.c_str());
   cout << inst.get_rm_str() << ", " << inst.get_data_str(sign);
 
-  const int data = op(inst.get_rm_value(), inst.get_data_value(), flags);
-  inst.put_value_rm(data);
+  const int data = op(inst.get_rm_value(is_wide), inst.get_data_value(), flags);
+  inst.put_rm_value(data, is_wide);
 
   return len;
 }
@@ -343,7 +347,7 @@ size_t Interpreter::proc_imm_to_reg(const char *head, const char *name, operatio
   cout << inst.get_reg_name() << ", " << inst.get_data_str();
 
   const int data = op(inst.get_reg_value(), inst.get_data_value(), flags);
-  inst.put_value_reg(data);
+  inst.put_reg_value(data);
 
   return len;
 }
@@ -380,7 +384,7 @@ size_t Interpreter::inst_lea(const char *head) {
   cout << inst.get_reg_name() << ", " << inst.get_rm_str();
 
   const int ea = inst.get_ea_value();
-  inst.put_value_reg(ea);
+  inst.put_reg_value(ea);
 
   return len;
 }

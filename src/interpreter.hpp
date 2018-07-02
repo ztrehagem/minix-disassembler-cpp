@@ -19,6 +19,7 @@ private:
   static operation fn_xor;
   static operation fn_add;
   static operation fn_cmp;
+  static operation fn_jne;
   static operation fn_jnb;
   static operation fn_test;
 

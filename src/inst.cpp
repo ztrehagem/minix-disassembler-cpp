@@ -111,34 +111,34 @@ string Inst::get_accumulator_str() {
   return w ? "ax" : "al";
 }
 
-int Inst::get_data_value(bool sign) {
+int Inst::get_data_value() {
   if (is_wide_data()) {
-    return sign ? static_cast<signed short>(data.wide) : data.wide;
+    return data.wide;
   } else {
-    return sign ? static_cast<signed char>(data.narrow) : data.narrow;
+    return data.narrow;
   }
 }
 
-int Inst::get_reg_value(bool sign, bool is_rm) {
+int Inst::get_reg_value(bool is_rm) {
   Reg &r = machine.get_reg();
 
   switch ((is_rm ? rm : reg) + (w << 3)) {
-    case 0b1000: return sign ? static_cast<signed short>(r.a.x) : r.a.x;
-    case 0b0000: return sign ? static_cast<signed char>(r.a.hl.l) : r.a.hl.l;
-    case 0b1001: return sign ? static_cast<signed short>(r.c.x) : r.c.x;
-    case 0b0001: return sign ? static_cast<signed char>(r.c.hl.l) : r.c.hl.l;
-    case 0b1010: return sign ? static_cast<signed short>(r.d.x) : r.d.x;
-    case 0b0010: return sign ? static_cast<signed char>(r.d.hl.l) : r.d.hl.l;
-    case 0b1011: return sign ? static_cast<signed short>(r.b.x) : r.b.x;
-    case 0b0011: return sign ? static_cast<signed char>(r.b.hl.l) : r.b.hl.l;
-    case 0b1100: return sign ? static_cast<signed short>(r.sp) : r.sp;
-    case 0b0100: return sign ? static_cast<signed char>(r.a.hl.h) : r.a.hl.h;
-    case 0b1101: return sign ? static_cast<signed short>(r.bp) : r.bp;
-    case 0b0101: return sign ? static_cast<signed char>(r.c.hl.h) : r.c.hl.h;
-    case 0b1110: return sign ? static_cast<signed short>(r.si) : r.si;
-    case 0b0110: return sign ? static_cast<signed char>(r.d.hl.h) : r.d.hl.h;
-    case 0b1111: return sign ? static_cast<signed short>(r.di) : r.di;
-    case 0b0111: return sign ? static_cast<signed char>(r.b.hl.h) : r.b.hl.h;
+    case 0b1000: return r.a.x;
+    case 0b0000: return r.a.hl.l;
+    case 0b1001: return r.c.x;
+    case 0b0001: return r.c.hl.l;
+    case 0b1010: return r.d.x;
+    case 0b0010: return r.d.hl.l;
+    case 0b1011: return r.b.x;
+    case 0b0011: return r.b.hl.l;
+    case 0b1100: return r.sp;
+    case 0b0100: return r.a.hl.h;
+    case 0b1101: return r.bp;
+    case 0b0101: return r.c.hl.h;
+    case 0b1110: return r.si;
+    case 0b0110: return r.d.hl.h;
+    case 0b1111: return r.di;
+    case 0b0111: return r.b.hl.h;
   }
   return 0;
 }
@@ -163,22 +163,25 @@ int Inst::get_ea_value() {
   return ea;
 }
 
-int Inst::get_rm_value(bool sign) {
+int Inst::get_rm_value() {
+  return get_rm_value(is_wide_data());
+}
+
+int Inst::get_rm_value(bool is_wide) {
   if (mod == 0b11) {
-    return get_reg_value(sign, true);
+    return get_reg_value(true);
   }
 
-  char *data_seg = machine.get_data_seg();
-
   if (mod == 0b00 && rm == 0b110) {
-    return sign ? static_cast<signed char>(data_seg[disp]) : data_seg[disp];
+    return is_wide ? machine.read_data_16(disp) : machine.read_data_8(disp);
   }
 
   int ea = get_ea_value();
+  int value = is_wide ? machine.read_data_16(ea) : machine.read_data_8(ea);
 
-  cout << "; (EA:" << hex << ea << "=" << (int)data_seg[ea] << ")";
+  cout << "; (EA:" << hex << ea << "=" << (is_wide ? "(w)" : "") << value << ")";
 
-  return sign ? static_cast<signed char>(data_seg[ea]) : data_seg[ea];
+  return value;
 }
 
 int Inst::get_accum_value() {
@@ -186,7 +189,7 @@ int Inst::get_accum_value() {
   return is_wide_data() ? r.a.x : r.a.hl.l;
 }
 
-void Inst::put_value_reg(const unsigned int value, bool is_rm) {
+void Inst::put_reg_value(const unsigned int value, bool is_rm) {
   Reg &r = machine.get_reg();
 
   switch ((is_rm ? rm : reg) + (w << 3)) {
@@ -209,22 +212,26 @@ void Inst::put_value_reg(const unsigned int value, bool is_rm) {
   }
 }
 
-void Inst::put_value_rm(const unsigned int value) {
+void Inst::put_rm_value(const unsigned int value) {
+  return put_rm_value(value, is_wide_data());
+}
+
+void Inst::put_rm_value(const unsigned int value, bool is_wide) {
   if (mod == 0b11) {
-    put_value_reg(value, true);
+    put_reg_value(value, true);
     return;
   }
 
   char *data_seg = machine.get_data_seg();
 
   if (mod == 0b00 && rm == 0b110) {
-    data_seg[disp] = value;
+    is_wide ? machine.write_data_16(disp, value) : machine.write_data_8(disp, value);
     return;
   }
 
   int ea = get_ea_value();
 
-  data_seg[ea] = value;
+  is_wide ? machine.write_data_16(ea, value) : machine.write_data_8(ea, value);
 }
 
 void Inst::put_accum_value(const unsigned int value) {

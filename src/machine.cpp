@@ -31,6 +31,23 @@ char *Machine::get_data_seg() {
   return data_seg;
 }
 
+char Machine::read_data_8(size_t pos) {
+  return data_seg[pos];
+}
+
+short Machine::read_data_16(size_t pos) {
+  return data_seg[pos] + (data_seg[pos + 1] << 8);
+}
+
+void Machine::write_data_8(size_t pos, char value) {
+  data_seg[pos] = value;
+}
+
+void Machine::write_data_16(size_t pos, short value) {
+  data_seg[pos] = 0xff & value;
+  data_seg[pos + 1] = 0xff & (value >> 8);
+}
+
 struct Reg &Machine::get_reg() {
   return reg;
 }
