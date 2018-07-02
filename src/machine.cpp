@@ -39,19 +39,19 @@ char *Machine::get_data_seg() {
   return data_seg;
 }
 
-char Machine::read_data_8(unsigned short pos) {
+unsigned char Machine::read_data_8(unsigned short pos) {
   return data_seg[pos];
 }
 
-short Machine::read_data_16(unsigned short pos) {
-  return data_seg[pos] + (data_seg[pos + 1] << 8);
+unsigned short Machine::read_data_16(unsigned short pos) {
+  return (0xff & data_seg[pos]) + ((0xff & data_seg[pos + 1]) << 8);
 }
 
-void Machine::write_data_8(unsigned short pos, char value) {
+void Machine::write_data_8(unsigned short pos, unsigned char value) {
   data_seg[pos] = value;
 }
 
-void Machine::write_data_16(unsigned short pos, short value) {
+void Machine::write_data_16(unsigned short pos, unsigned short value) {
   data_seg[pos] = 0xff & value;
   data_seg[pos + 1] = 0xff & (value >> 8);
 }

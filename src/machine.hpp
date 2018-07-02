@@ -15,10 +15,10 @@ public:
   void set_pc(unsigned short);
   char *get_head(unsigned short offset = 0);
   char *get_data_seg();
-  char read_data_8(unsigned short pos);
-  short read_data_16(unsigned short pos);
-  void write_data_8(unsigned short pos, char value);
-  void write_data_16(unsigned short pos, short value);
+  unsigned char read_data_8(unsigned short pos);
+  unsigned short read_data_16(unsigned short pos);
+  void write_data_8(unsigned short pos, unsigned char value);
+  void write_data_16(unsigned short pos, unsigned short value);
   struct Reg reg;
   struct Flags flags;
 
