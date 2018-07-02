@@ -23,7 +23,15 @@ struct exec &Machine::get_header() {
   return header;
 }
 
-char *Machine::get_head(size_t offset) {
+unsigned short Machine::get_pc() {
+  return pc;
+}
+
+void Machine::set_pc(unsigned short pc) {
+  this->pc = pc;
+}
+
+char *Machine::get_head(unsigned short offset) {
   return &text_seg[pc + offset];
 }
 
@@ -31,19 +39,19 @@ char *Machine::get_data_seg() {
   return data_seg;
 }
 
-char Machine::read_data_8(size_t pos) {
+char Machine::read_data_8(unsigned short pos) {
   return data_seg[pos];
 }
 
-short Machine::read_data_16(size_t pos) {
+short Machine::read_data_16(unsigned short pos) {
   return data_seg[pos] + (data_seg[pos + 1] << 8);
 }
 
-void Machine::write_data_8(size_t pos, char value) {
+void Machine::write_data_8(unsigned short pos, char value) {
   data_seg[pos] = value;
 }
 
-void Machine::write_data_16(size_t pos, short value) {
+void Machine::write_data_16(unsigned short pos, short value) {
   data_seg[pos] = 0xff & value;
   data_seg[pos + 1] = 0xff & (value >> 8);
 }

@@ -53,6 +53,19 @@ operation Interpreter::fn_cmp = [](Machine *m, short d, short s) {
   fn_sub(m, d, s);
   return d;
 };
+operation Interpreter::fn_call = [](Machine *m, short pos, short _) {
+  fn_push(m, true, m->get_pc());
+  cout << " call:" << hex << pos;
+  // m->set_pc(pos); // FIXME ループする
+  return 0;
+};
+operation Interpreter::fn_ret = [](Machine *m, short disp, short _) {
+  m->reg.sp += disp; // FIXME 正しい？
+  unsigned short pc = fn_pop(m, true, 0);
+  cout << " ret:" << hex << pc;
+  // m->set_pc(pc);
+  return 0;
+};
 operation Interpreter::fn_jne = [](Machine *m, short orig, short disp) {
   return !m->flags.z ? disp : orig;
 };
@@ -210,21 +223,21 @@ void Interpreter::interpret() {
     // //              == 0b10101100) pc += proc_single(head, "lods");
     // // else if ((top & 0b11111110)
     // //              == 0b10101010) pc += proc_single(head, "stos");
-    // // CONTROL TRANSFER
-    // else if ((top & 0b11111111)
-    //              == 0b11101000) pc += proc_jmp_direct_within_segment(head, "call", pc);
-    // else if ((dbl & 0b1111111100111000)
-    //              == 0b1111111100010000) pc += proc_jmp_indirect_within_segment(head, "call");
+    // CONTROL TRANSFER
+    else if ((top & 0b11111111)
+                 == 0b11101000) pc += proc_jmp_direct_within_segment(head, "call", fn_call);
+    else if ((dbl & 0b1111111100111000)
+                 == 0b1111111100010000) pc += proc_jmp_indirect_within_segment(head, "call", fn_call);
     // else if ((top & 0b11111111)
     //              == 0b11101001) pc += proc_jmp_direct_within_segment(head, "jmp", pc);
     // else if ((top & 0b11111111)
     //              == 0b11101011) pc += proc_jmp_direct_within_segment(head, "jmp short", pc, true);
     // else if ((dbl & 0b1111111100111000)
     //              == 0b1111111100100000) pc += proc_jmp_indirect_within_segment(head, "jmp");
-    // else if ((top & 0b11111111)
-    //              == 0b11000011) pc += proc_single(head, "ret");
-    // else if ((top & 0b11111111)
-    //              == 0b11000010) pc += proc_disp(head, "ret");
+    else if ((top & 0b11111111)
+                 == 0b11000011) pc += proc_single(head, "ret", fn_ret);
+    else if ((top & 0b11111111)
+                 == 0b11000010) pc += proc_disp(head, "ret", fn_ret);
     // else if ((top & 0b11111111)
     //              == 0b01110100) pc += proc_branch(head, "je", pc);
     // else if ((top & 0b11111111)
@@ -406,6 +419,35 @@ size_t Interpreter::proc_reg(const char *head, const char *name, operation op) {
   return len;
 }
 
+size_t Interpreter::proc_jmp_direct_within_segment(const char *head, const char *name, operation op, const bool narrow) {
+  short disp;
+  if (narrow) {
+    disp = static_cast<signed char>(util::get_data_narrow(&head[1]));
+  } else {
+    disp = static_cast<signed short>(util::get_data_wide(&head[1]));
+  }
+  const size_t len = narrow ? 2 : 3;
+  cout << util::instruction_str(head, len) << name << " ";
+  cout << util::data_str_wide(pc + len + disp);
+
+  op(this, len + disp, 0);
+
+  return len;
+}
+
+size_t Interpreter::proc_jmp_indirect_within_segment(const char *head, const char *name, operation op) {
+  Inst inst(this);
+  inst.set_mod_sec();
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_rm_str();
+
+  op(this, inst.get_rm_value(), 0);
+
+  return len;
+}
+
 size_t Interpreter::proc_branch(const char *head, const char *name, operation op) {
   const char disp = util::get_data_narrow(&head[1]);
   const size_t len = 2;
@@ -424,6 +466,31 @@ size_t Interpreter::inst_lea(const char *head) {
 
   const int ea = inst.get_ea_value();
   inst.put_reg_value(ea);
+
+  return len;
+}
+
+size_t Interpreter::proc_single(const char *head, const char *name, operation op) {
+  const size_t len = 1;
+  cout << util::instruction_str(head, len) << name;
+
+  op(this, 0, 0);
+
+  return len;
+}
+
+size_t Interpreter::proc_disp(const char *head, const char *name, operation op, const bool narrow) {
+  short disp;
+  if (narrow) {
+    disp = static_cast<signed char>(util::get_data_narrow(&head[1]));
+  } else {
+    disp = static_cast<signed short>(util::get_data_wide(&head[1]));
+  }
+  const size_t len = narrow ? 2 : 3;
+  cout << util::instruction_str(head, len) << name << " ";
+  cout << util::data_str_wide(disp);
+
+  op(this, disp, 0);
 
   return len;
 }
