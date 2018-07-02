@@ -20,7 +20,7 @@ operation Interpreter::fn_sub = [](short d, short s, Flags &f) {
   f.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   f.s = result < 0;
   f.z = result == 0;
-  f.c = false; // FIXME
+  f.c = d < s;
   return result;
 };
 operation Interpreter::fn_xor = [](short d, short s, Flags &f) {
@@ -36,15 +36,11 @@ operation Interpreter::fn_add = [](short d, short s, Flags &f) {
   f.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
   f.s = result < 0;
   f.z = result == 0;
-  f.c = result > SHRT_MAX;
+  f.c = (SHRT_MAX - d) < s;
   return result;
 };
 operation Interpreter::fn_cmp = [](short d, short s, Flags &f) {
-  int result = d - s;
-  f.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
-  f.s = result < 0;
-  f.z = result == 0;
-  f.c = false; // FIXME
+  fn_sub(d, s, f);
   return d;
 };
 operation Interpreter::fn_jnb = [](short orig, short disp, Flags &f) {
