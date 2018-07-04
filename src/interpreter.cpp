@@ -27,6 +27,14 @@ operation Interpreter::fn_pop = [](Machine *m, short is_wide, short _) {
   m->reg.sp += is_wide ? 2 : 1;
   return result;
 };
+operation Interpreter::fn_inc = [](Machine *m, short is_wide, short value) {
+  int result = value + 1;
+  m->flags.o = value == SHRT_MAX;
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = false;
+  return result;
+};
 operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
   int result = d - s;
   m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
@@ -44,12 +52,20 @@ operation Interpreter::fn_dec = [](Machine *m, short is_wide, short value) {
   m->flags.c = false;
   return result;
 };
-operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
-  int result = src1 & src2;
-  m->flags.o = 0;
+operation Interpreter::fn_and = [](Machine *m, short d, short s) {
+  int result = d & s;
+  m->flags.o = false;
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  m->flags.c = 0;
+  m->flags.c = false;
+  return result;
+};
+operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
+  int result = src1 & src2;
+  m->flags.o = false;
+  m->flags.s = result < 0;
+  m->flags.z = result == 0;
+  m->flags.c = false;
   return 0;
 };
 operation Interpreter::fn_or = [](Machine *m, short d, short s) {
@@ -217,10 +233,10 @@ void Interpreter::interpret() {
     //              == 0b1000000000010000) pc += proc_imm_to_rm(head, "adc", SIGNED, true);
     // else if ((top & 0b11111110)
     //              == 0b00010100) pc += proc_imm_to_accum(head, "adc");
-    // else if ((dbl & 0b1111111000111000)
-    //              == 0b1111111000000000) pc += proc_rm(head, "inc", true);
-    // else if ((top & 0b11111000)
-    //              == 0b01000000) pc += proc_reg(head, "inc");
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111111000000000) pc += proc_rm(head, "inc", fn_inc, true);
+    else if ((top & 0b11111000)
+                 == 0b01000000) pc += proc_reg(head, "inc", fn_inc);
     else if ((top & 0b11111100)
                  == 0b00101000) pc += proc_rm_and_reg_to_either(head, "sub", fn_sub, true);
     else if ((dbl & 0b1111110000111000)
@@ -270,13 +286,13 @@ void Interpreter::interpret() {
     //              == 0b1101000000010000) pc += proc_logic(head, "rcl", true);
     // else if ((dbl & 0b1111110000111000)
     //              == 0b1101000000011000) pc += proc_logic(head, "rcr", true);
-    // // AND
-    // else if ((top & 0b11111100)
-    //              == 0b00100000) pc += proc_rm_and_reg_to_either(head, "and", true);
-    // else if ((dbl & 0b1111111000111000)
-    //              == 0b1000000000100000) pc += proc_imm_to_rm(head, "and", UNSIGNED);
-    // else if ((top & 0b11111110)
-    //              == 0b00100100) pc += proc_imm_to_accum(head, "and");
+    // AND
+    else if ((top & 0b11111100)
+                 == 0b00100000) pc += proc_rm_and_reg_to_either(head, "and", fn_and, true);
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1000000000100000) pc += proc_imm_to_rm(head, "and", fn_and, UNSIGNED);
+    else if ((top & 0b11111110)
+                 == 0b00100100) pc += proc_imm_to_accum(head, "and", fn_and);
     // TEST
     else if ((top & 0b11111110)
                  == 0b10000100) pc += proc_rm_and_reg_to_either(head, "test", fn_test);

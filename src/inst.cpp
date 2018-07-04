@@ -176,7 +176,7 @@ int Inst::get_rm_value(bool is_wide) {
   unsigned short ea = get_ea_value();
   int value = is_wide ? machine.read_data_16(ea) : machine.read_data_8(ea);
 
-  cout << "; (EA:" << hex << ea << "=" << (is_wide ? "(w)" : "") << value << ")";
+  cout << "; ([" << hex << ea << "]=" << (is_wide ? "(w)" : "") << value << ")";
 
   return value;
 }

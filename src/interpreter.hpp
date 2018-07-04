@@ -17,8 +17,10 @@ private:
   static operation fn_mov;
   static operation fn_push;
   static operation fn_pop;
+  static operation fn_inc;
   static operation fn_sub;
   static operation fn_dec;
+  static operation fn_and;
   static operation fn_test;
   static operation fn_or;
   static operation fn_xor;
