@@ -1,12 +1,12 @@
 #pragma once
 
 typedef unsigned short char_p;
-typedef struct {short m1i1, m1i2, m1i3; char_p m1p1, m1p2, m1p3;} mess_1;
-typedef struct {short m2i1, m2i2, m2i3; int m2l1, m2l2; char_p m2p1;} mess_2;
-typedef struct {short m3i1, m3i2; char_p m3p1; char m3ca1[14];} mess_3;
-typedef struct {int m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
-typedef struct {char m5c1, m5c2; short m5i1, m5i2; int m5l1, m5l2, m5l3;}mess_5;
-typedef struct {short m6i1, m6i2, m6i3; int m6l1; int m6f1;} mess_6;
+struct mess_1 {short m1i1, m1i2, m1i3; char_p m1p1, m1p2, m1p3;} __attribute__((packed));
+struct mess_2 {short m2i1, m2i2, m2i3; int m2l1, m2l2; char_p m2p1;} __attribute__((packed));
+struct mess_3 {short m3i1, m3i2; char_p m3p1; char m3ca1[14];} __attribute__((packed));
+struct mess_4 {int m4l1, m4l2, m4l3, m4l4, m4l5;} __attribute__((packed));
+struct mess_5 {char m5c1, m5c2; short m5i1, m5i2; int m5l1, m5l2, m5l3;} __attribute__((packed));
+struct mess_6 {short m6i1, m6i2, m6i3; int m6l1; int m6f1;} __attribute__((packed));
 
 struct Message {
   short m_source;
@@ -19,7 +19,7 @@ struct Message {
     mess_5 m_m5;
     mess_6 m_m6;
   } m_u;
-};
+} __attribute__((packed));
 
 #define m1_i1  m_u.m_m1.m1i1
 #define m1_i2  m_u.m_m1.m1i2

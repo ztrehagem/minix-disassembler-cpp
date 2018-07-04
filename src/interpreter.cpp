@@ -2,8 +2,9 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
-#include <unistd.h>
 #include <cmath>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include "interpreter.hpp"
 #include "inst.hpp"
 #include "util.hpp"
@@ -614,22 +615,37 @@ size_t Interpreter::inst_int_1(const char *head) {
 
   cout << dec;
 
+  int ret;
+
   switch (m->m_type) {
-    case 1: // exit
+    case 0x0001: // exit
       cout << endl << "<exit(" << m->m1_i1 << ")>";
       cout << endl << flush;
       exit(m->m1_i1);
       break;
-    case 4: // write
+    case 0x0004: // write
       cout << endl << "<write(";
       cout << m->m1_i1 << ", ";
-      cout << "0x" << util::hex_str((unsigned short)m->m1_p1, sizeof(m->m1_p1) * 2) << ", ";
+      cout << "0x" << util::hex_str(m->m1_p1, sizeof(m->m1_p1) * 2) << ", ";
       cout << m->m1_i2 << ")>";
       cout << endl << flush;
-      int ret = write(m->m1_i1, &data_seg[m->m1_p1], m->m1_i2);
+      ret = write(m->m1_i1, &data_seg[m->m1_p1], m->m1_i2);
       m->m_type = ret;
       cout << endl << "=> " << ret;
       break;
+    // case 0x0011: // break
+    //   break;
+    case 0x0036: // ioctl
+      cout << endl << "<ioctl(";
+      cout << m->m2_i1 << ", ";
+      cout << "0x" << util::hex_str(m->m2_i3, sizeof(m->m2_i3) * 2) << ", ";
+      cout << "0x" << util::hex_str(m->m2_p1, sizeof(m->m2_p1) * 2) << ")>";
+      ret = ioctl(m->m2_i1, m->m2_i3, &data_seg[m->m2_p1]);
+      m->m_type = ret;
+      cout << endl << "=> " << ret;
+      break;
+    default:
+      cout << endl << "not implemented for syscall type 0x" << hex << m->m_type;
   }
 
   reg.a.x = 0; // success for system calling
