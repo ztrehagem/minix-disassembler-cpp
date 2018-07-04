@@ -141,8 +141,8 @@ int Inst::get_reg_value(bool is_rm) {
   return 0;
 }
 
-int Inst::get_ea_value() {
-  int ea;
+unsigned short Inst::get_ea_value() {
+  unsigned short ea;
 
   switch (rm & 0b111) {
     case 0b000: ea = machine.reg.b.x + machine.reg.si; break;
@@ -173,7 +173,7 @@ int Inst::get_rm_value(bool is_wide) {
     return is_wide ? machine.read_data_16(disp) : machine.read_data_8(disp);
   }
 
-  int ea = get_ea_value();
+  unsigned short ea = get_ea_value();
   int value = is_wide ? machine.read_data_16(ea) : machine.read_data_8(ea);
 
   cout << "; (EA:" << hex << ea << "=" << (is_wide ? "(w)" : "") << value << ")";
@@ -223,7 +223,7 @@ void Inst::put_rm_value(const unsigned int value, bool is_wide) {
     return;
   }
 
-  int ea = get_ea_value();
+  unsigned short ea = get_ea_value();
 
   is_wide ? machine.write_data_16(ea, value) : machine.write_data_8(ea, value);
 }

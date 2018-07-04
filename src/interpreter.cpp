@@ -80,6 +80,10 @@ operation Interpreter::fn_cmp = [](Machine *m, short d, short s) {
   fn_sub(m, d, s);
   return d;
 };
+operation Interpreter::fn_cbw = [](Machine *m, short _, short len) {
+  m->reg.a.x = (char)m->reg.a.hl.l;
+  return 0;
+};
 operation Interpreter::fn_call = [](Machine *m, short disp, short len) {
   fn_push(m, true, m->get_pc() + len);
   unsigned short pos = m->get_pc() + disp;
@@ -245,8 +249,8 @@ void Interpreter::interpret() {
     //              == 0b1111011000100000) pc += proc_rm(head, "mul", true);
     // else if ((dbl & 0b1111111000111000)
     //              == 0b1111011000110000) pc += proc_rm(head, "div", true);
-    // else if ((top & 0b11111111)
-    //              == 0b10011000) pc += proc_single(head, "cbw");
+    else if ((top & 0b11111111)
+                 == 0b10011000) pc += proc_single(head, "cbw", fn_cbw);
     // else if ((top & 0b11111111)
     //              == 0b10011001) pc += proc_single(head, "cwd");
     // // LOGIC
@@ -548,7 +552,7 @@ size_t Interpreter::inst_lea(const char *head) {
   cout << inst.get_inst_str("lea");
   cout << inst.get_reg_name() << ", " << inst.get_rm_str();
 
-  const int ea = inst.get_ea_value();
+  const unsigned short ea = inst.get_ea_value();
   inst.put_reg_value(ea);
 
   return len;
@@ -587,6 +591,13 @@ size_t Interpreter::inst_int_1(const char *head) {
 
   Message *m = reinterpret_cast<Message *>(&data_seg[reg.b.x]);
 
+  cout << endl << "Message:";
+  for(size_t i = 0; i < sizeof(Message); i++) {
+    cout << " " << setfill('0') << setw(2) << hex << (int)read_data_8(reg.b.x + i);
+  }
+
+  cout << dec;
+
   switch (m->m_type) {
     case 1: // exit
       cout << endl << "<exit(" << m->m1_i1 << ")>";
@@ -596,13 +607,16 @@ size_t Interpreter::inst_int_1(const char *head) {
     case 4: // write
       cout << endl << "<write(";
       cout << m->m1_i1 << ", ";
-      cout << "0x" << util::hex_str(m->m1_p1, sizeof(m->m1_p1) * 2) << ", ";
+      cout << "0x" << util::hex_str((unsigned short)m->m1_p1, sizeof(m->m1_p1) * 2) << ", ";
       cout << m->m1_i2 << ")>";
       cout << endl << flush;
       int ret = write(m->m1_i1, &data_seg[m->m1_p1], m->m1_i2);
+      m->m_type = ret;
       cout << endl << "=> " << ret;
       break;
   }
+
+  reg.a.x = 0; // success for system calling
 
   return len;
 }

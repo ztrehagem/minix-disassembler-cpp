@@ -55,7 +55,7 @@ struct Inst {
 
   int get_data_value();
   int get_reg_value(bool is_rm = false);
-  int get_ea_value();
+  unsigned short get_ea_value();
   int get_rm_value();
   int get_rm_value(bool is_wide);
   int get_accum_value();

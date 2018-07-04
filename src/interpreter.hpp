@@ -24,6 +24,7 @@ private:
   static operation fn_xor;
   static operation fn_add;
   static operation fn_cmp;
+  static operation fn_cbw;
   static operation fn_call;
   static operation fn_jump;
   static operation fn_ret;

@@ -1,6 +1,6 @@
 #pragma once
 
-typedef short char_p;
+typedef unsigned short char_p;
 typedef struct {short m1i1, m1i2, m1i3; char_p m1p1, m1p2, m1p3;} mess_1;
 typedef struct {short m2i1, m2i2, m2i3; int m2l1, m2l2; char_p m2p1;} mess_2;
 typedef struct {short m3i1, m3i2; char_p m3p1; char m3ca1[14];} mess_3;
