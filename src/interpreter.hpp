@@ -10,7 +10,7 @@ typedef function<short(Machine *, short, short)> operation;
 
 class Interpreter : public Machine {
 public:
-  Interpreter(ifstream &ifs) : Machine(ifs) {};
+  Interpreter(ifstream &ifs, int argc, char const *argv[]);
   void interpret();
 
 private:

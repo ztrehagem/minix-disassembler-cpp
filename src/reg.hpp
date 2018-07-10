@@ -27,7 +27,8 @@ struct Reg {
   unsigned short di;
 
   Reg() {
-    sp = 0xffdc;//0x00;
+    // sp = 0xffdc;//0x00;
+    sp = 0x0000;
     bp = 0x0000;
     si = 0x0000;
     di = 0x0000;

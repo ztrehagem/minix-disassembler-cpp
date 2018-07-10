@@ -13,6 +13,30 @@
 
 using namespace std;
 
+Interpreter::Interpreter(ifstream &ifs, int argc, char const *argv[]) : Machine(ifs) {
+  // TODO: push args to stack
+  unsigned short argp[argc];
+
+  for(int i = 0; i < argc; i++) {
+    const char *arg = argv[i];
+    size_t len = strlen(arg);
+    for(int j = len; j >= 0; j--) {
+      fn_push(this, false, arg[j] & 0xff);
+    }
+    argp[i] = this->reg.sp;
+  }
+
+  fn_push(this, true, 0);
+
+  for(int i = argc - 1; i >= 0; i--) {
+    fn_push(this, true, argp[i]);
+  }
+
+  fn_push(this, true, argc);
+  
+};
+
+
 operation Interpreter::fn_mov = [](Machine *m, short d, short s) {
   return s;
 };
@@ -187,7 +211,7 @@ operation Interpreter::fn_jns = [](Machine *m, short orig, short disp) {
 };
 
 void Interpreter::interpret() {
-  cout << " AX   BX   CX   DX   SP   BP   SI   DI  FLAG  IP" << endl;
+  cout << endl << " AX   BX   CX   DX   SP   BP   SI   DI  FLAG  IP" << endl;
 
   while (pc < header.a_text) {
     cout << reg.str() << ' ';

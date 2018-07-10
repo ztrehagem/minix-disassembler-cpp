@@ -19,7 +19,7 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
-  Interpreter interpreter(ifs);
+  Interpreter interpreter(ifs, argc - 1, &argv[1]);
   interpreter.interpret();
 
   cout << endl;
