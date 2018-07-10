@@ -1,3 +1,5 @@
 disassembler
 interpreter
 exp/
+*.o
+!.keep

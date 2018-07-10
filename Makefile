@@ -3,6 +3,7 @@ default: disassembler interpreter
 clean:
 	-rm disassembler
 	-rm interpreter
+	-find dist -type f -name '*.o'
 
 check-disassemble: disassembler
 	./disassembler bin/1.c.out > out/1.c.txt
@@ -26,21 +27,28 @@ check-interpret: interpreter
 	./interpreter bin/3.s.out
 	./interpreter bin/4.s.out
 
-disassembler: src/main-disassembler.cpp src/disassembler.cpp src/machine.cpp src/inst.cpp src/util.cpp
+disassembler: dist/main-disassembler.o dist/disassembler.o dist/machine.o dist/inst.o dist/util.o
 	g++ -std=c++11 -o $@ $^
 
-interpreter: src/main-interpreter.cpp src/interpreter.cpp src/machine.cpp src/inst.cpp src/util.cpp
+interpreter: dist/main-interpreter.o dist/interpreter.o dist/machine.o dist/inst.o dist/util.o
 	g++ -std=c++11 -o $@ $^
 
-src/main-disassembler.cpp: src/disassembler.hpp
-src/main-interpreter.cpp: src/interpreter.hpp
-src/disassembler.hpp: src/a.out.hpp
-src/disassembler.cpp: src/disassembler.hpp src/inst.hpp src/consts.hpp src/util.hpp
-src/interpreter.cpp: src/interpreter.hpp src/inst.hpp src/util.hpp src/consts.hpp src/message.hpp
-src/interpreter.hpp: src/a.out.hpp src/reg.hpp src/flags.hpp
-src/machine.cpp: src/machine.hpp
-src/machine.hpp: src/a.out.hpp src/reg.hpp src/flags.hpp
+dist/main-disassembler.o: src/main-disassembler.cpp src/disassembler.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/main-interpreter.o: src/main-interpreter.cpp src/interpreter.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/disassembler.hpp: src/a.out.hpp
+dist/disassembler.o: src/disassembler.cpp src/disassembler.hpp src/inst.hpp src/consts.hpp src/util.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/interpreter.o: src/interpreter.cpp src/interpreter.hpp src/inst.hpp src/util.hpp src/consts.hpp src/message.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/interpreter.hpp: src/a.out.hpp src/reg.hpp src/flags.hpp
+dist/machine.o: src/machine.cpp src/machine.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/machine.hpp: src/a.out.hpp src/reg.hpp src/flags.hpp
 src/inst.hpp: src/consts.hpp
-src/inst.cpp: src/inst.hpp src/util.hpp
-src/util.cpp: src/util.hpp
+dist/inst.o: src/inst.cpp src/inst.hpp src/util.hpp
+	g++ -std=c++11 -o $@ -c $<
+dist/util.o: src/util.cpp src/util.hpp
+	g++ -std=c++11 -o $@ -c $<
 src/reg.hpp: src/util.hpp
