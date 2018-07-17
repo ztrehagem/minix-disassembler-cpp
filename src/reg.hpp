@@ -7,14 +7,14 @@
 union SharedReg {
   unsigned short x;
   struct {
-    unsigned char h;
     unsigned char l;
+    unsigned char h;
   } hl;
 
   SharedReg() {
     x = 0x0000;
   }
-};
+} __attribute__((packed));
 
 struct Reg {
   union SharedReg a;

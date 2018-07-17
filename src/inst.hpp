@@ -18,8 +18,8 @@ struct Inst {
   unsigned mod:2;
   unsigned rm:3;
   union {
-    unsigned wide:16;
-    unsigned narrow:8;
+    signed wide:16;
+    signed narrow:8;
   } data;
   signed disp:16;
   size_t disp_size;

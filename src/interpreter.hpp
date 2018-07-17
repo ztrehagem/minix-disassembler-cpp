@@ -27,6 +27,8 @@ private:
   static operation fn_add;
   static operation fn_cmp;
   static operation fn_cbw;
+  static operation fn_shl;
+  static operation fn_shr;
   static operation fn_call;
   static operation fn_jump;
   static operation fn_ret;
@@ -53,6 +55,7 @@ private:
   size_t proc_imm_to_accum(const char *head, const char *name, operation);
   size_t proc_rm(const char *head, const char *name, operation, bool w = false);
   size_t proc_reg(const char *head, const char *name, operation);
+  size_t proc_logic(const char *head, const char *name, operation, const bool v = false);
   size_t proc_jmp_direct_within_segment(const char *head, const char *name, operation, const bool narrow = false);
   size_t proc_jmp_indirect_within_segment(const char *head, const char *name, operation);
   size_t proc_branch(const char *head, const char *name, operation);

@@ -53,11 +53,12 @@ operation Interpreter::fn_pop = [](Machine *m, short is_wide, short _) {
   return result;
 };
 operation Interpreter::fn_inc = [](Machine *m, short is_wide, short value) {
-  int result = value + 1;
-  m->flags.o = value == SHRT_MAX;
+  int d = value;
+  int s = 1;
+  int result = d + s;
+  m->flags.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  m->flags.c = false;
   return result;
 };
 operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
@@ -65,16 +66,16 @@ operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
   m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  m->flags.c = (d > 0 && d < s);
+  m->flags.c = (d >= 0 && result < 0);
   return result;
 };
 operation Interpreter::fn_dec = [](Machine *m, short is_wide, short value) {
-  int result = value - 1;
-  m->flags.o = value == SHRT_MIN;
+  short d = value;
+  short s = 1;
+  int result = d - s;
+  m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  // m->flags.c = value == 0; // XXX
-  m->flags.c = false;
   return result;
 };
 operation Interpreter::fn_and = [](Machine *m, short d, short s) {
@@ -91,7 +92,7 @@ operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
   m->flags.s = result < 0;
   m->flags.z = result == 0;
   m->flags.c = false;
-  return 0;
+  return src1;
 };
 operation Interpreter::fn_or = [](Machine *m, short d, short s) {
   int result = d | s;
@@ -124,6 +125,30 @@ operation Interpreter::fn_cmp = [](Machine *m, short d, short s) {
 operation Interpreter::fn_cbw = [](Machine *m, short _, short len) {
   m->reg.a.x = (char)m->reg.a.hl.l;
   return 0;
+};
+operation Interpreter::fn_shl = [](Machine *m, short value, short count) {
+  int result = value << count;
+  if (count > 0) {
+    m->flags.c = (value >> (sizeof(value) * 8 - count)) & 0b1;
+    m->flags.s = result < 0;
+    m->flags.z = result == 0;
+  }
+  if (count == 1) {
+    m->flags.o = (value < 0) ? result >= 0 : result < 0;
+  }
+  return result;
+};
+operation Interpreter::fn_shr = [](Machine *m, short value, short count) {
+  int result = value >> count;
+  if (count > 0) {
+    m->flags.c = (value >> (count - 1)) & 0b1;
+    m->flags.s = result < 0;
+    m->flags.z = result == 0;
+  }
+  if (count == 1) {
+    m->flags.o = (value < 0) ? result >= 0 : result < 0;
+  }
+  return result;
 };
 operation Interpreter::fn_call = [](Machine *m, short disp, short len) {
   fn_push(m, true, m->get_pc() + len);
@@ -182,7 +207,7 @@ operation Interpreter::fn_jne = [](Machine *m, short orig, short disp) {
   return disp;
 };
 operation Interpreter::fn_jnl = [](Machine *m, short orig, short disp) {
-  m->set_pc(m->get_pc() + (!m->flags.z ? disp : orig));
+  m->set_pc(m->get_pc() + (!m->flags.s ? disp : orig));
   return disp;
 };
 operation Interpreter::fn_jnle = [](Machine *m, short orig, short disp) {
@@ -297,10 +322,10 @@ void Interpreter::interpret() {
     // // LOGIC
     // else if ((dbl & 0b1111111000111000)
     //              == 0b1111001000010000) pc += proc_logic(head, "not");
-    // else if ((dbl & 0b1111110000111000)
-    //              == 0b1101000000100000) pc += proc_logic(head, "shl", true);
-    // else if ((dbl & 0b1111110000111000)
-    //              == 0b1101000000101000) pc += proc_logic(head, "shr", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000100000) pc += proc_logic(head, "shl", fn_shl, true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000101000) pc += proc_logic(head, "shr", fn_shr, true);
     // else if ((dbl & 0b1111110000111000)
     //              == 0b1101000000111000) pc += proc_logic(head, "sar", true);
     // else if ((dbl & 0b1111110000111000)
@@ -548,6 +573,25 @@ size_t Interpreter::proc_reg(const char *head, const char *name, operation op) {
   return len;
 }
 
+size_t Interpreter::proc_logic(const char *head, const char *name, operation op, const bool v) {
+  Inst inst(this);
+  if (v) inst.v = head[0] >> 1;
+  inst.w = head[0];
+  inst.set_mod_sec();
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_rm_str();
+  if (v) cout << ", " << (inst.v ? (inst.mod == 0b11 ? "cl" : "[cl]") : "1");
+
+  const int clmem = inst.is_wide_data() ? read_data_16(reg.c.hl.l) : read_data_8(reg.c.hl.l);
+  const int count = inst.v ? (inst.mod == 0b11 ? reg.c.hl.l : clmem) : 1;
+  const int data = op(this, inst.get_rm_value(), count);
+  inst.put_rm_value(data);
+
+  return len;
+}
+
 size_t Interpreter::proc_jmp_direct_within_segment(const char *head, const char *name, operation op, const bool narrow) {
   short disp;
   if (narrow) {
@@ -657,8 +701,16 @@ size_t Interpreter::inst_int_1(const char *head) {
       m->m_type = ret;
       cout << endl << "=> " << ret;
       break;
-    // case 0x0011: // break
-    //   break;
+    case 0x0011: // break
+      cout << endl << "brk(";
+      cout << "0x" << util::hex_str(m->m1_p1, sizeof(m->m1_p1) * 2) << ")>";
+      // ret addr or -1 (in minix source)
+      ret = m->m1_p1;
+      m->m2_p1 = ret;
+      ret = 0;
+      m->m_type = ret;
+      cout << endl << "=> " << ret;
+      break;
     case 0x0036: // ioctl
       cout << endl << "<ioctl(";
       cout << m->m2_i1 << ", ";

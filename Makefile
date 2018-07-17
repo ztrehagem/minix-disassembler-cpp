@@ -3,7 +3,7 @@ default: disassembler interpreter
 clean:
 	-rm disassembler
 	-rm interpreter
-	-find dist -type f -name '*.o'
+	-find dist -type f -name '*.o' -delete
 
 check-disassemble: disassembler
 	./disassembler bin/1.c.out > out/1.c.txt
