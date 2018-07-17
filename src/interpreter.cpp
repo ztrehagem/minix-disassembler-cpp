@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "interpreter.hpp"
-#include "inst.hpp"
 #include "util.hpp"
 #include "consts.hpp"
 #include "message.hpp"
@@ -21,38 +20,42 @@ Interpreter::Interpreter(ifstream &ifs, int argc, char const *argv[]) : Machine(
     const char *arg = argv[i];
     size_t len = strlen(arg);
     for(int j = len; j >= 0; j--) {
-      fn_push(this, false, arg[j] & 0xff);
+      fn_push(this, false, arg[j] & 0xff, 0);
     }
     argp[i] = this->reg.sp;
   }
 
-  fn_push(this, true, 0);
+  fn_push(this, true, 0, 0);
 
   for(int i = argc - 1; i >= 0; i--) {
-    fn_push(this, true, argp[i]);
+    fn_push(this, true, argp[i], 0);
   }
 
-  fn_push(this, true, argc);
+  fn_push(this, true, argc, 0);
   
 };
 
 
-operation Interpreter::fn_mov = [](Machine *m, short d, short s) {
+operation Interpreter::fn_mov = [](Machine *m, bool w, short d, short s) {
   return s;
 };
-operation Interpreter::fn_push = [](Machine *m, short is_wide, short value) {
-  m->reg.sp -= is_wide ? 2 : 1;
-  is_wide ? m->write_data_16(m->reg.sp, value) : m->write_data_8(m->reg.sp, value);
+operation Interpreter::fn_push = [](Machine *m, bool w, short value, short _) {
+  m->reg.sp -= w ? 2 : 1;
+  w ? m->write_data_16(m->reg.sp, value) : m->write_data_8(m->reg.sp, value);
   cout << " push:" << hex << m->reg.sp << "(" << value << ")";
   return value;
 };
-operation Interpreter::fn_pop = [](Machine *m, short is_wide, short _) {
-  unsigned short result = is_wide ? m->read_data_16(m->reg.sp) : m->read_data_8(m->reg.sp);
+operation Interpreter::fn_pop = [](Machine *m, bool w, short _, short __) {
+  unsigned short result = w ? m->read_data_16(m->reg.sp) : m->read_data_8(m->reg.sp);
   cout << " pop:" << hex << m->reg.sp << "(" << result << ")";
-  m->reg.sp += is_wide ? 2 : 1;
+  m->reg.sp += w ? 2 : 1;
   return result;
 };
-operation Interpreter::fn_inc = [](Machine *m, short is_wide, short value) {
+operation Interpreter::fn_xchg = [](Machine *m, bool w, short d, short s) {
+  // FIXME
+  return 0;
+};
+operation Interpreter::fn_inc = [](Machine *m, bool w, short value, short _) {
   int d = value;
   int s = 1;
   int result = d + s;
@@ -61,7 +64,7 @@ operation Interpreter::fn_inc = [](Machine *m, short is_wide, short value) {
   m->flags.z = result == 0;
   return result;
 };
-operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
+operation Interpreter::fn_sub = [](Machine *m, bool w, short d, short s) {
   int result = d - s;
   m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   m->flags.s = result < 0;
@@ -69,7 +72,7 @@ operation Interpreter::fn_sub = [](Machine *m, short d, short s) {
   m->flags.c = (d >= 0 && result < 0);
   return result;
 };
-operation Interpreter::fn_dec = [](Machine *m, short is_wide, short value) {
+operation Interpreter::fn_dec = [](Machine *m, bool w, short value, short _) {
   short d = value;
   short s = 1;
   int result = d - s;
@@ -78,7 +81,7 @@ operation Interpreter::fn_dec = [](Machine *m, short is_wide, short value) {
   m->flags.z = result == 0;
   return result;
 };
-operation Interpreter::fn_and = [](Machine *m, short d, short s) {
+operation Interpreter::fn_and = [](Machine *m, bool w, short d, short s) {
   int result = d & s;
   m->flags.o = false;
   m->flags.s = result < 0;
@@ -86,7 +89,7 @@ operation Interpreter::fn_and = [](Machine *m, short d, short s) {
   m->flags.c = false;
   return result;
 };
-operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
+operation Interpreter::fn_test = [](Machine *m, bool w, short src1, short src2) {
   int result = src1 & src2;
   m->flags.o = false;
   m->flags.s = result < 0;
@@ -94,7 +97,7 @@ operation Interpreter::fn_test = [](Machine *m, short src1, short src2) {
   m->flags.c = false;
   return src1;
 };
-operation Interpreter::fn_or = [](Machine *m, short d, short s) {
+operation Interpreter::fn_or = [](Machine *m, bool w, short d, short s) {
   int result = d | s;
   m->flags.o = false;
   m->flags.s = result < 0;
@@ -102,7 +105,7 @@ operation Interpreter::fn_or = [](Machine *m, short d, short s) {
   m->flags.c = false;
   return result;
 };
-operation Interpreter::fn_xor = [](Machine *m, short d, short s) {
+operation Interpreter::fn_xor = [](Machine *m, bool w, short d, short s) {
   int result = d ^ s;
   m->flags.o = false;
   m->flags.s = result < 0;
@@ -110,7 +113,7 @@ operation Interpreter::fn_xor = [](Machine *m, short d, short s) {
   m->flags.c = false;
   return result;
 };
-operation Interpreter::fn_add = [](Machine *m, short d, short s) {
+operation Interpreter::fn_add = [](Machine *m, bool w, short d, short s) {
   int result = d + s;
   m->flags.o = (s > 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s);
   m->flags.s = result < 0;
@@ -118,18 +121,39 @@ operation Interpreter::fn_add = [](Machine *m, short d, short s) {
   m->flags.c = (SHRT_MAX - d) < s;
   return result;
 };
-operation Interpreter::fn_cmp = [](Machine *m, short d, short s) {
-  fn_sub(m, d, s);
+operation Interpreter::fn_cmp = [](Machine *m, bool w, short d, short s) {
+  fn_sub(m, w, d, s);
   return d;
 };
-operation Interpreter::fn_cbw = [](Machine *m, short _, short len) {
+operation Interpreter::fn_mul = [](Machine *m, bool w, short d, short s) {
+  int result = d * s;
+  return result;
+};
+operation Interpreter::fn_div = [](Machine *m, bool w, short value, short _) {
+  int dividend = w ? ((m->reg.d.x & 0xffff) << 16) + (m->reg.a.x & 0xffff) : m->reg.a.x;
+  int q = dividend / value;
+  int r = dividend % value;
+  if (w) {
+    m->reg.a.x = q;
+    m->reg.d.x = r;
+  } else {
+    m->reg.a.hl.l = q;
+    m->reg.a.hl.h = r;
+  }
+  return value;
+};
+operation Interpreter::fn_cbw = [](Machine *m, bool w, short _, short len) {
   m->reg.a.x = (char)m->reg.a.hl.l;
   return 0;
 };
-operation Interpreter::fn_shl = [](Machine *m, short value, short count) {
+operation Interpreter::fn_cwd = [](Machine *m, bool w, short _, short len) {
+  m->reg.d.x = (short)m->reg.a.x < 0 ? 0xffff : 0x0000;
+  return 0;
+};
+operation Interpreter::fn_shl = [](Machine *m, bool w, short value, short count) {
   int result = value << count;
   if (count > 0) {
-    m->flags.c = (value >> (sizeof(value) * 8 - count)) & 0b1;
+    m->flags.c = (value >> ((w + 1) * 8 - count)) & 0b1;
     m->flags.s = result < 0;
     m->flags.z = result == 0;
   }
@@ -138,7 +162,7 @@ operation Interpreter::fn_shl = [](Machine *m, short value, short count) {
   }
   return result;
 };
-operation Interpreter::fn_shr = [](Machine *m, short value, short count) {
+operation Interpreter::fn_shr = [](Machine *m, bool w, short value, short count) {
   int result = value >> count;
   if (count > 0) {
     m->flags.c = (value >> (count - 1)) & 0b1;
@@ -150,87 +174,87 @@ operation Interpreter::fn_shr = [](Machine *m, short value, short count) {
   }
   return result;
 };
-operation Interpreter::fn_call = [](Machine *m, short disp, short len) {
-  fn_push(m, true, m->get_pc() + len);
+operation Interpreter::fn_call = [](Machine *m, bool w, short disp, short len) {
+  fn_push(m, true, m->get_pc() + len, 0);
   unsigned short pos = m->get_pc() + disp;
   cout << " call:" << hex << pos << "+len";
   m->set_pc(pos);
   return 0;
 };
-operation Interpreter::fn_jump = [](Machine *m, short disp, short _) {
+operation Interpreter::fn_jump = [](Machine *m, bool w, short disp, short _) {
   unsigned short pos = m->get_pc() + disp;
   cout << " jump:" << hex << pos << "+len";
   m->set_pc(pos);
   return 0;
 };
-operation Interpreter::fn_ret = [](Machine *m, short disp, short len) {
+operation Interpreter::fn_ret = [](Machine *m, bool w, short disp, short len) {
   m->reg.sp += disp; // XXX 正しい？
-  unsigned short pc = fn_pop(m, true, 0);
+  unsigned short pc = fn_pop(m, true, 0, 0);
   cout << " ret:" << hex << pc << "+len";
   m->set_pc(pc - len);
   return 0;
 };
-operation Interpreter::fn_je = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_je = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.z ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jl = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jl = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.s ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jle = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jle = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + ((m->flags.s || m->flags.z) ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jb = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jb = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.s ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jbe = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jbe = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + ((m->flags.s || m->flags.z) ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jp = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jp = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.z ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jo = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jo = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.o ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_js = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_js = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (m->flags.s ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jne = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jne = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.z ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jnl = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jnl = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.s ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jnle = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jnle = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + ((!m->flags.s && !m->flags.z) ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jnb = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jnb = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.s ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jnbe = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jnbe = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + ((!m->flags.s && !m->flags.z) ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jnp = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jnp = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.z ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jno = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jno = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.o ? disp : orig));
   return disp;
 };
-operation Interpreter::fn_jns = [](Machine *m, short orig, short disp) {
+operation Interpreter::fn_jns = [](Machine *m, bool w, short orig, short disp) {
   m->set_pc(m->get_pc() + (!m->flags.s ? disp : orig));
   return disp;
 };
@@ -261,10 +285,10 @@ void Interpreter::interpret() {
                  == 0b1000111100000000) pc += proc_rm(head, "pop", fn_pop);
     else if ((top & 0b11111000)
                  == 0b01011000) pc += proc_reg(head, "pop", fn_pop);
-    // else if ((top & 0b11111110)
-    //              == 0b10000110) pc += proc_rm_and_reg_to_either(head, "xchg");
-    // else if ((top & 0b11111000)
-    //              == 0b10010000) pc += proc_reg_with_accum(head, "xchg");
+    else if ((top & 0b11111110)
+                 == 0b10000110) pc += proc_rm_and_reg_to_either(head, "xchg", fn_xchg);
+    else if ((top & 0b11111000)
+                 == 0b10010000) pc += proc_reg_with_accum(head, "xchg", fn_xchg);
     // else if ((top & 0b11111110)
     //              == 0b11100100) pc += inst_in_1(head);
     // else if ((top & 0b11111110)
@@ -312,13 +336,13 @@ void Interpreter::interpret() {
     else if ((top & 0b11111110)
                  == 0b00111100) pc += proc_imm_to_accum(head, "cmp", fn_cmp);
     // else if ((dbl & 0b1111111000111000)
-    //              == 0b1111011000100000) pc += proc_rm(head, "mul", true);
-    // else if ((dbl & 0b1111111000111000)
-    //              == 0b1111011000110000) pc += proc_rm(head, "div", true);
+    //              == 0b1111011000100000) pc += proc_rm(head, "mul", fn_mul, true);
+    else if ((dbl & 0b1111111000111000)
+                 == 0b1111011000110000) pc += proc_rm(head, "div", fn_div, true);
     else if ((top & 0b11111111)
                  == 0b10011000) pc += proc_single(head, "cbw", fn_cbw);
-    // else if ((top & 0b11111111)
-    //              == 0b10011001) pc += proc_single(head, "cwd");
+    else if ((top & 0b11111111)
+                 == 0b10011001) pc += proc_single(head, "cwd", fn_cwd);
     // // LOGIC
     // else if ((dbl & 0b1111111000111000)
     //              == 0b1111001000010000) pc += proc_logic(head, "not");
@@ -479,13 +503,13 @@ size_t Interpreter::proc_rm_and_reg_to_either(const char *head, const char *name
   if (inst.d) {
     const int d = inst.get_reg_value();
     const int s = inst.get_rm_value();
-    const int data = op(this, d, s);
+    const int data = op(this, inst.is_wide_data(), d, s);
     inst.put_reg_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   } else {
     const int d = inst.get_rm_value();
     const int s = inst.get_reg_value();
-    const int data = op(this, d, s);
+    const int data = op(this, inst.is_wide_data(), d, s);
     inst.put_rm_value(data);
     cout << "; " << hex << d << ", " << s << ": " << data;
   }
@@ -507,7 +531,7 @@ size_t Interpreter::proc_imm_to_rm(const char *head, const char *name, operation
   cout << inst.get_inst_str(fixed_name.c_str());
   cout << inst.get_rm_str() << ", " << inst.get_data_str(sign);
 
-  const int data = op(this, inst.get_rm_value(is_wide), inst.get_data_value());
+  const int data = op(this, is_wide, inst.get_rm_value(is_wide), inst.get_data_value());
   inst.put_rm_value(data, is_wide);
 
   return len;
@@ -523,7 +547,7 @@ size_t Interpreter::proc_imm_to_reg(const char *head, const char *name, operatio
   cout << inst.get_inst_str(name);
   cout << inst.get_reg_name() << ", " << inst.get_data_str();
 
-  const int data = op(this, inst.get_reg_value(), inst.get_data_value());
+  const int data = op(this, inst.is_wide_data(), inst.get_reg_value(), inst.get_data_value());
   inst.put_reg_value(data);
 
   return len;
@@ -538,7 +562,7 @@ size_t Interpreter::proc_imm_to_accum(const char *head, const char *name, operat
   cout << inst.get_inst_str(name);
   cout << inst.get_accumulator_str() << ", " << inst.get_data_str();
 
-  const int data = op(this, inst.get_accum_value(), inst.get_data_value());
+  const int data = op(this, inst.is_wide_data(), inst.get_accum_value(), inst.get_data_value());
   inst.put_accum_value(data);
 
   return len;
@@ -553,7 +577,7 @@ size_t Interpreter::proc_rm(const char *head, const char *name, operation op, co
   cout << inst.get_inst_str(name);
   cout << inst.get_rm_str();
 
-  const int data = op(this, inst.is_wide_data(), inst.get_rm_value());
+  const int data = op(this, inst.is_wide_data(), inst.get_rm_value(), 0);
   inst.put_rm_value(data);
 
   return len;
@@ -567,7 +591,21 @@ size_t Interpreter::proc_reg(const char *head, const char *name, operation op) {
   cout << inst.get_inst_str(name);
   cout << inst.get_reg_name();
 
-  const int data = op(this, inst.is_wide_data(), inst.get_reg_value());
+  const int data = op(this, inst.is_wide_data(), inst.get_reg_value(), 0);
+  inst.put_reg_value(data);
+
+  return len;
+}
+
+size_t Interpreter::proc_reg_with_accum(const char *head, const char *name, operation op) {
+  Inst inst(this);
+  inst.reg = head[0];
+
+  const size_t len = inst.get_inst_len();
+  cout << inst.get_inst_str(name);
+  cout << inst.get_reg_name() << ", " << inst.get_accumulator_str();
+
+  const int data = op(this, inst.is_wide_data(), inst.get_reg_value(), inst.get_accum_value());
   inst.put_reg_value(data);
 
   return len;
@@ -586,7 +624,7 @@ size_t Interpreter::proc_logic(const char *head, const char *name, operation op,
 
   const int clmem = inst.is_wide_data() ? read_data_16(reg.c.hl.l) : read_data_8(reg.c.hl.l);
   const int count = inst.v ? (inst.mod == 0b11 ? reg.c.hl.l : clmem) : 1;
-  const int data = op(this, inst.get_rm_value(), count);
+  const int data = op(this, inst.is_wide_data(), inst.get_rm_value(), count);
   inst.put_rm_value(data);
 
   return len;
@@ -603,7 +641,7 @@ size_t Interpreter::proc_jmp_direct_within_segment(const char *head, const char 
   cout << util::instruction_str(head, len) << name << " ";
   cout << util::data_str_wide(pc + len + disp);
 
-  op(this, disp, len);
+  op(this, false, disp, len);
   return len;
 }
 
@@ -616,7 +654,7 @@ size_t Interpreter::proc_jmp_indirect_within_segment(const char *head, const cha
   cout << inst.get_rm_str();
 
   short disp = inst.get_rm_value() - len - pc;
-  op(this, disp, len);
+  op(this, false, disp, len);
   return len;
 }
 
@@ -625,7 +663,7 @@ size_t Interpreter::proc_branch(const char *head, const char *name, operation op
   const size_t len = 2;
   cout << util::instruction_str(head, len) << name << " ";
   cout << util::data_str_wide(pc + len + disp);
-  op(this, 0, disp);
+  op(this, false, 0, disp);
   return len;
 }
 
@@ -647,7 +685,7 @@ size_t Interpreter::proc_single(const char *head, const char *name, operation op
   const size_t len = 1;
   cout << util::instruction_str(head, len) << name;
 
-  op(this, 0, len);
+  op(this, false, 0, len);
 
   return len;
 }
@@ -663,7 +701,7 @@ size_t Interpreter::proc_disp(const char *head, const char *name, operation op, 
   cout << util::instruction_str(head, len) << name << " ";
   cout << util::data_str_wide(disp);
 
-  op(this, disp, len);
+  op(this, false, disp, len);
 
   return len;
 }

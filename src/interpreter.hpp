@@ -3,10 +3,11 @@
 #include <fstream>
 #include <functional>
 #include "machine.hpp"
+#include "inst.hpp"
 
 using namespace std;
 
-typedef function<short(Machine *, short, short)> operation;
+typedef function<short(Machine *, bool wide, short dest, short src)> operation;
 
 class Interpreter : public Machine {
 public:
@@ -17,6 +18,7 @@ private:
   static operation fn_mov;
   static operation fn_push;
   static operation fn_pop;
+  static operation fn_xchg;
   static operation fn_inc;
   static operation fn_sub;
   static operation fn_dec;
@@ -26,7 +28,10 @@ private:
   static operation fn_xor;
   static operation fn_add;
   static operation fn_cmp;
+  static operation fn_mul;
+  static operation fn_div;
   static operation fn_cbw;
+  static operation fn_cwd;
   static operation fn_shl;
   static operation fn_shr;
   static operation fn_call;
@@ -55,6 +60,7 @@ private:
   size_t proc_imm_to_accum(const char *head, const char *name, operation);
   size_t proc_rm(const char *head, const char *name, operation, bool w = false);
   size_t proc_reg(const char *head, const char *name, operation);
+  size_t proc_reg_with_accum(const char *head, const char *name, operation);
   size_t proc_logic(const char *head, const char *name, operation, const bool v = false);
   size_t proc_jmp_direct_within_segment(const char *head, const char *name, operation, const bool narrow = false);
   size_t proc_jmp_indirect_within_segment(const char *head, const char *name, operation);
