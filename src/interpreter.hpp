@@ -7,11 +7,11 @@
 
 using namespace std;
 
-typedef function<short(Machine *, bool wide, short dest, short src)> operation;
+typedef function<short(Machine *, bool wide, short &dest, short &src)> operation;
 
 class Interpreter : public Machine {
 public:
-  Interpreter(ifstream &ifs, int argc, char const *argv[]);
+  Interpreter(ifstream &ifs, short argc, char const *argv[]);
   void interpret();
 
 private:
@@ -22,6 +22,7 @@ private:
   static operation fn_inc;
   static operation fn_sub;
   static operation fn_dec;
+  static operation fn_neg;
   static operation fn_and;
   static operation fn_test;
   static operation fn_or;
