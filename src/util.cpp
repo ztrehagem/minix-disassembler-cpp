@@ -3,6 +3,8 @@
 #include <iomanip>
 #include "util.hpp"
 
+using namespace std;
+
 unsigned short util::get_data_wide(const char *head) {
   return (head[0] & 0xff) + ((head[1] & 0xff) << 8);
 }

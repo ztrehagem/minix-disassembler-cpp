@@ -5,8 +5,6 @@
 #include "consts.hpp"
 #include "reg.hpp"
 
-using namespace std;
-
 struct Inst {
   // const char *head;
   Machine &machine;
@@ -46,12 +44,12 @@ struct Inst {
   void set_data();
   bool is_wide_data();
   size_t get_inst_len();
-  string get_inst_str(const char *op);
-  string get_reg_name(const bool is_rm = false);
-  string get_rm_str();
-  string get_data_str(const bool sign = SIGNED);
-  string get_dist_str();
-  string get_accumulator_str();
+  std::string get_inst_str(const char *op);
+  std::string get_reg_name(const bool is_rm = false);
+  std::string get_rm_str();
+  std::string get_data_str(const bool sign = SIGNED);
+  std::string get_dist_str();
+  std::string get_accumulator_str();
 
   int get_data_value();
   int get_reg_value(bool is_rm = false);

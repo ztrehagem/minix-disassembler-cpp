@@ -5,13 +5,11 @@
 #include "machine.hpp"
 #include "inst.hpp"
 
-using namespace std;
-
-typedef function<short(Machine *, bool wide, short &dest, short &src)> operation;
+typedef std::function<short(Machine *, bool wide, short &dest, short &src)> operation;
 
 class Interpreter : public Machine {
 public:
-  Interpreter(ifstream &ifs, short argc, char const *argv[]);
+  Interpreter(std::ifstream &ifs, short argc, char const *argv[]);
   void interpret();
 
 private:

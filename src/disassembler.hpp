@@ -4,11 +4,9 @@
 #include <string>
 #include "machine.hpp"
 
-using namespace std;
-
 class Disassembler : public Machine {
 public:
-  Disassembler(ifstream &ifs) : Machine(ifs) {};
+  Disassembler(std::ifstream &ifs) : Machine(ifs) {};
   void disassemble();
 
 private:
