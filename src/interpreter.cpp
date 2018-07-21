@@ -169,7 +169,7 @@ operation Interpreter::fn_cwd = [](Machine *m, bool w, short &_, short &len) {
   return 0;
 };
 operation Interpreter::fn_shl = [](Machine *m, bool w, short &value, short &count) {
-  int result = value << count;
+  unsigned short result = value << count;
   if (count > 0) {
     m->flags.c = (value >> ((w + 1) * 8 - count)) & 0b1;
     m->flags.s = result < 0;
@@ -181,7 +181,27 @@ operation Interpreter::fn_shl = [](Machine *m, bool w, short &value, short &coun
   return value = result;
 };
 operation Interpreter::fn_shr = [](Machine *m, bool w, short &value, short &count) {
-  int result = value >> count;
+  unsigned short result = value >> count;
+  if (count > 0) {
+    m->flags.c = (value >> (count - 1)) & 0b1;
+    m->flags.s = result < 0;
+    m->flags.z = result == 0;
+  }
+  if (count == 1) {
+    m->flags.o = (value < 0) ? result >= 0 : result < 0;
+  }
+  return value = result;
+};
+operation Interpreter::fn_sar = [](Machine *m, bool w, short &value, short &count) {
+  short result = value >> count;
+  // for (int c = count; c > 0; c--) {
+  //   m->flags.c = result & 0b1;
+  //   result /= 2;
+  // }
+  // m->flags.s = result < 0;
+  // m->flags.z = result == 0;
+  // m->flags.o = false;
+  // return value = result;
   if (count > 0) {
     m->flags.c = (value >> (count - 1)) & 0b1;
     m->flags.s = result < 0;
@@ -371,8 +391,8 @@ void Interpreter::interpret() {
                  == 0b1101000000100000) pc += proc_logic(head, "shl", fn_shl, true);
     else if ((dbl & 0b1111110000111000)
                  == 0b1101000000101000) pc += proc_logic(head, "shr", fn_shr, true);
-    // else if ((dbl & 0b1111110000111000)
-    //              == 0b1101000000111000) pc += proc_logic(head, "sar", true);
+    else if ((dbl & 0b1111110000111000)
+                 == 0b1101000000111000) pc += proc_logic(head, "sar", fn_sar, true);
     // else if ((dbl & 0b1111110000111000)
     //              == 0b1101000000000000) pc += proc_logic(head, "rol", true);
     // else if ((dbl & 0b1111110000111000)

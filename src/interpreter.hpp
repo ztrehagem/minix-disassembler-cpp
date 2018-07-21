@@ -35,6 +35,7 @@ private:
   static operation fn_cwd;
   static operation fn_shl;
   static operation fn_shr;
+  static operation fn_sar;
   static operation fn_call;
   static operation fn_jump;
   static operation fn_ret;
