@@ -13,7 +13,8 @@
 using namespace std;
 
 Interpreter::Interpreter(ifstream &ifs, short argc, char const *argv[]) : Machine(ifs) {
-  // TODO: push args to stack
+  // pushing args to stack
+
   unsigned short argp[argc];
   short zero = 0;
 
@@ -35,9 +36,8 @@ Interpreter::Interpreter(ifstream &ifs, short argc, char const *argv[]) : Machin
   }
 
   fn_push(this, true, argc, zero);
-  
-};
 
+};
 
 operation Interpreter::fn_mov = [](Machine *m, bool w, short &d, short &s) {
   return d = move(s);
@@ -142,11 +142,6 @@ operation Interpreter::fn_cmp = [](Machine *m, bool w, short &d, short &s) {
   m->flags.c = (d >= 0 && result < 0);
   return result;
 };
-operation Interpreter::fn_mul = [](Machine *m, bool w, short &d, short &s) {
-  // FIXME
-  int result = d * s;
-  return d = result;
-};
 operation Interpreter::fn_div = [](Machine *m, bool w, short &value, short &_) {
   int dividend = w ? ((m->reg.d.x & 0xffff) << 16) + (m->reg.a.x & 0xffff) : m->reg.a.x;
   int q = dividend / value;
@@ -194,14 +189,6 @@ operation Interpreter::fn_shr = [](Machine *m, bool w, short &value, short &coun
 };
 operation Interpreter::fn_sar = [](Machine *m, bool w, short &value, short &count) {
   short result = value >> count;
-  // for (int c = count; c > 0; c--) {
-  //   m->flags.c = result & 0b1;
-  //   result /= 2;
-  // }
-  // m->flags.s = result < 0;
-  // m->flags.z = result == 0;
-  // m->flags.o = false;
-  // return value = result;
   if (count > 0) {
     m->flags.c = (value >> (count - 1)) & 0b1;
     m->flags.s = result < 0;
