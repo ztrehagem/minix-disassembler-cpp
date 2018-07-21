@@ -12,5 +12,8 @@ $ make check-disassemble
 
 ### Interpreterの実行(1.s - 4.s)
 ```
-$ make check-interpret
+$ ./interpreter bin/1.s.out
+$ ./interpreter bin/2.s.out
+$ ./interpreter bin/1.c.out
+$ ./interpreter bin/2.c.out
 ```
