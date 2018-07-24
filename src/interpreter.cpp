@@ -74,7 +74,7 @@ operation Interpreter::fn_sub = [](Machine *m, bool w, short &d, short &s) {
   m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  m->flags.c = (d >= 0 && result < 0);
+  m->flags.c = (unsigned short)d < (unsigned short)s;
   return d = result;
 };
 operation Interpreter::fn_dec = [](Machine *m, bool w, short &value, short &_) {
@@ -139,7 +139,7 @@ operation Interpreter::fn_cmp = [](Machine *m, bool w, short &d, short &s) {
   m->flags.o = (s < 0 ? SHRT_MAX - d : d - SHRT_MIN) < abs(s); 
   m->flags.s = result < 0;
   m->flags.z = result == 0;
-  m->flags.c = (d >= 0 && result < 0);
+  m->flags.c = (unsigned short)d < (unsigned short)s;
   return result;
 };
 operation Interpreter::fn_div = [](Machine *m, bool w, short &value, short &_) {
